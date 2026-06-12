@@ -335,6 +335,44 @@ footer {
 footer a { color: var(--accent); text-decoration: none; }
 footer a:hover { text-decoration: underline; }
 
+/* ── Progress bar ────────────────────────────────────── */
+.run-right {
+  display: flex; flex-direction: column; gap: 6px; flex: 1;
+}
+.progress-wrap {
+  width: 100%; max-width: 400px;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.progress-bar.indeterminate {
+  width: 40%;
+  animation: progress-slide 1.2s ease-in-out infinite;
+}
+.progress-bar.complete {
+  width: 100%;
+  background: var(--success);
+  transition: width 0.2s ease;
+}
+.progress-bar.error-bar {
+  width: 100%;
+  background: var(--error);
+  transition: width 0.2s ease;
+}
+@keyframes progress-slide {
+  0%   { transform: translateX(-120%); }
+  50%  { transform: translateX(160%); }
+  100% { transform: translateX(160%); }
+}
+
 /* ── Loading spinner ─────────────────────────────────── */
 .spinner {
   display: inline-block;

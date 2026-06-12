@@ -242,6 +242,17 @@ function loadSctrText(text) {
   if (rows.length > 0) initCtrlTable(rows);
 }
 
+// ── Export .prm ───────────────────────────────────────────────────────────────
+document.getElementById("btn-export-prm").addEventListener("click", () => {
+  const content = assemblePrm();
+  const blob = new Blob([content], { type: "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "parameters.prm";
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
 // ── File upload handlers ─────────────────────────────────────────────────────
 document.getElementById("upload-prm").addEventListener("change", e => {
   const file = e.target.files[0]; if (!file) return;
@@ -302,11 +313,27 @@ window.addEventListener("load", () => {
   setTimeout(loadWasm, 100);
 });
 
-// ── Status messages ───────────────────────────────────────────────────────────
+// ── Status messages & progress bar ───────────────────────────────────────────
 function setStatus(msg, type = "") {
   const el = document.getElementById("status-msg");
   el.textContent = msg;
   el.className = type;
+}
+
+function showProgress(state) {
+  // state: "running" | "done" | "error" | "hidden"
+  const wrap = document.getElementById("progress-wrap");
+  const bar  = document.getElementById("progress-bar");
+  if (state === "hidden") {
+    wrap.style.display = "none";
+    bar.className = "progress-bar";
+    return;
+  }
+  wrap.style.display = "block";
+  bar.className = "progress-bar";
+  if (state === "running")   bar.classList.add("indeterminate");
+  else if (state === "done") bar.classList.add("complete");
+  else if (state === "error") bar.classList.add("error-bar");
 }
 
 // ── Run simulation ────────────────────────────────────────────────────────────
@@ -318,10 +345,11 @@ document.getElementById("btn-run").addEventListener("click", () => {
   const paramContent = assemblePrm();
   const ctrlContent  = assembleSctr();
 
-  setStatus("⟳ Running simulation…", "");
+  setStatus("Running simulation…", "");
+  showProgress("running");
   document.getElementById("btn-run").disabled = true;
 
-  // Run async so the browser can repaint the status message first
+  // Give the browser one frame to paint the progress bar before WASM blocks the thread
   setTimeout(() => {
     try {
       const result = ntcModule.runSimulation(paramContent, ctrlContent);
@@ -329,16 +357,23 @@ document.getElementById("btn-run").addEventListener("click", () => {
 
       if (result.startsWith("ERROR:")) {
         setStatus(result, "error");
+        showProgress("error");
+        setTimeout(() => showProgress("hidden"), 2000);
         return;
       }
 
       lastOutputData = result;
-      setStatus(`Done — ${countRows(result)} data points.`, "success");
+      const n = countRows(result);
+      setStatus(`Done — ${n} data points.`, "success");
+      showProgress("done");
+      setTimeout(() => showProgress("hidden"), 1500);
       document.getElementById("btn-download").disabled = false;
       plotResult(result);
     } catch (e) {
       document.getElementById("btn-run").disabled = false;
       setStatus("Runtime error: " + e.message, "error");
+      showProgress("error");
+      setTimeout(() => showProgress("hidden"), 2000);
     }
   }, 30);
 });
