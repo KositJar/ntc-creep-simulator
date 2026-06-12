@@ -1,0 +1,50 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Emscripten SDK
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.64
+
+      - name: Create dist directory
+        run: mkdir -p dist
+
+      - name: Build WASM
+        run: |
+          emcc src/wasm/main_wasm.cpp \
+            -I src/wasm \
+            -o dist/ntc_solver.js \
+            -s ALLOW_MEMORY_GROWTH=1 \
+            -s MODULARIZE=1 \
+            -s EXPORT_NAME='NTCSolver' \
+            -s FORCE_FILESYSTEM=1 \
+            --bind \
+            -O2
+
+      - name: Copy web assets to dist
+        run: |
+          cp src/web/index.html dist/
+          cp src/web/app.js     dist/
+          cp src/web/style.css  dist/
+          cp -r src/web/example dist/example
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          force_orphan: true

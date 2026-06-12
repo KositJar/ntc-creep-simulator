@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NTC Creep Simulator</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Plotly.js for interactive charts -->
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <!-- WASM module (built by CI) -->
+  <script src="ntc_solver.js"></script>
+</head>
+<body>
+
+<!-- Password Gate -->
+<div id="gate">
+  <div class="gate-box">
+    <h2>NTC Creep Simulator</h2>
+    <p>Lab access only — enter the password to continue.</p>
+    <input type="password" id="pw-input" placeholder="Password" autofocus>
+    <button class="btn-primary" id="pw-btn" style="width:100%">Enter</button>
+    <div class="gate-error" id="gate-error"></div>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- Header -->
+  <header>
+    <div class="header-left">
+      <h1>NTC Creep Simulator</h1>
+      <span>Nonlinear Three-Component Model</span>
+    </div>
+    <div class="header-right">
+      <button id="theme-toggle">☾ Dark</button>
+    </div>
+  </header>
+
+  <!-- Input panels (two columns) -->
+  <div class="two-col">
+
+    <!-- Left: Parameter editor -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>Model Parameters</span>
+        <div class="upload-row">
+          <span>Upload .prm:</span>
+          <label class="btn-secondary btn-sm" style="cursor:pointer;padding:4px 10px;border:1px solid var(--border);border-radius:4px;font-size:0.78rem;">
+            Browse<input type="file" id="upload-prm" accept=".prm" style="display:none">
+          </label>
+        </div>
+      </div>
+      <div class="panel-body">
+
+        <!-- Section: Initial Conditions -->
+        <button class="section-toggle" type="button">
+          Initial Conditions
+          <span class="arrow">▶</span>
+        </button>
+        <div class="section-body" id="sec-init-body"></div>
+
+        <!-- Section: Elastic -->
+        <button class="section-toggle open" type="button">
+          Elastic Component
+          <span class="arrow">▶</span>
+        </button>
+        <div class="section-body open" id="sec-elastic-body"></div>
+
+        <!-- Section: Viscous -->
+        <button class="section-toggle open" type="button">
+          Viscous Component
+          <span class="arrow">▶</span>
+        </button>
+        <div class="section-body open" id="sec-viscous-body"></div>
+
+        <!-- Section: Reference Curve -->
+        <button class="section-toggle" type="button">
+          Reference Curve (Inviscid)
+          <span class="arrow">▶</span>
+        </button>
+        <div class="section-body" id="sec-ref-body"></div>
+
+        <!-- Section: Aging -->
+        <button class="section-toggle" type="button">
+          Aging / Temperature
+          <span class="arrow">▶</span>
+        </button>
+        <div class="section-body" id="sec-aging-body"></div>
+
+        <!-- Section: Solver -->
+        <button class="section-toggle" type="button">
+          Solver Settings
+          <span class="arrow">▶</span>
+        </button>
+        <div class="section-body" id="sec-solver-body"></div>
+
+      </div>
+    </div>
+
+    <!-- Right: Loading sequence editor -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>Loading Sequence</span>
+        <div class="upload-row">
+          <span>Upload .sctr:</span>
+          <label class="btn-secondary btn-sm" style="cursor:pointer;padding:4px 10px;border:1px solid var(--border);border-radius:4px;font-size:0.78rem;">
+            Browse<input type="file" id="upload-sctr" accept=".sctr,.ctr" style="display:none">
+          </label>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="ctrl-table-wrap">
+          <table class="ctrl-table">
+            <thead>
+              <tr>
+                <th>Event Type</th>
+                <th>Start Time (s)</th>
+                <th>End Time (s)</th>
+                <th>Control Value</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="ctrl-tbody"></tbody>
+          </table>
+        </div>
+        <div class="ctrl-btn-row">
+          <button class="btn-secondary btn-sm" id="btn-add-row">+ Add Row</button>
+        </div>
+        <div style="margin-top:14px;font-size:0.75rem;color:var(--text-muted);line-height:1.6">
+          <strong>Event types:</strong><br>
+          1 = Strain Rate &nbsp;|&nbsp; 2 = Relaxation &nbsp;|&nbsp; 3 = Strain Accel.<br>
+          4 = Stress Rate &nbsp;|&nbsp; 5 = Creep (const. stress) &nbsp;|&nbsp; 6 = StressStrain
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Run area -->
+  <div class="run-area">
+    <button class="btn-primary" id="btn-run" disabled>
+      Run Simulation
+    </button>
+    <span id="status-msg">Loading WASM module…</span>
+  </div>
+
+  <!-- Output panel -->
+  <div class="panel">
+    <div class="panel-header">
+      <span>Results</span>
+      <button class="btn-secondary btn-sm" id="btn-download" disabled>⬇ Download .dat</button>
+    </div>
+    <div class="panel-body">
+
+      <!-- Axis selectors (hidden until first run) -->
+      <div class="output-controls" id="output-controls" style="display:none">
+        <div class="axis-select">
+          <label>X axis:</label>
+          <select id="axis-x"></select>
+        </div>
+        <div class="axis-select">
+          <label>Y axis:</label>
+          <select id="axis-y"></select>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div id="chart-container">
+        <div id="chart-placeholder">Run a simulation to see the results here.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>
+      Based on the Nonlinear Three-Component model:
+      Di Benedetto et al. (2002) and Tatsuoka et al. (2002).
+    </p>
+  </footer>
+
+</div><!-- /#app -->
+
+<script src="app.js"></script>
+</body>
+</html>
