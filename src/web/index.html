@@ -3,19 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NTC Creep Simulator</title>
+  <title>NTC Creep Simulator v1.2</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Plotly.js for interactive charts -->
   <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
-  <!-- WASM module (built by CI) -->
-  <script src="ntc_solver.js"></script>
 </head>
-<body>
+<body class="dark">
 
-<!-- Password Gate -->
+<!-- ── Password Gate ─────────────────────────────────────────────────────── -->
 <div id="gate">
   <div class="gate-box">
-    <h2>NTC Creep Simulator</h2>
+    <h2>NTC Creep Simulator v1.2</h2>
     <p>Lab access only — enter the password to continue.</p>
     <input type="password" id="pw-input" placeholder="Password" autofocus>
     <button class="btn-primary" id="pw-btn" style="width:100%">Enter</button>
@@ -25,26 +22,27 @@
 
 <div id="app">
 
-  <!-- Header -->
-  <header>
-    <div class="header-left">
-      <h1>NTC Creep Simulator</h1>
-      <span>Nonlinear Three-Component Model</span>
+  <!-- ── Navigation bar ──────────────────────────────────────────────────── -->
+  <nav class="navbar">
+    <div class="nav-brand">NTC Creep Simulator <span class="nav-version">v1.2</span></div>
+    <div class="nav-links">
+      <button class="nav-btn" onclick="openModal('modal-howto')">How to Use</button>
+      <button class="nav-btn" onclick="openModal('modal-faq')">FAQ</button>
+      <button class="nav-btn" onclick="openModal('modal-changelog')">Changelog</button>
+      <button class="nav-btn" onclick="openModal('modal-about')">About</button>
+      <button id="theme-toggle" class="nav-btn nav-btn-icon" title="Toggle theme">☀ Light</button>
     </div>
-    <div class="header-right">
-      <button id="theme-toggle">☾ Dark</button>
-    </div>
-  </header>
+  </nav>
 
-  <!-- Input panels (two columns) -->
+  <!-- ── Input panels ─────────────────────────────────────────────────────── -->
   <div class="two-col">
 
     <!-- Left: Parameter editor -->
     <div class="panel">
       <div class="panel-header">
-        <span>Model Parameters</span>
+        <span>Parameter Editor</span>
         <div class="upload-row">
-          <label class="btn-secondary btn-sm" style="cursor:pointer;padding:4px 10px;border:1px solid var(--border);border-radius:4px;font-size:0.78rem;">
+          <label class="btn-secondary btn-sm file-label">
             Browse<input type="file" id="upload-prm" accept=".prm" style="display:none">
           </label>
           <button class="btn-secondary btn-sm" id="btn-export-prm">⬇ Export .prm</button>
@@ -52,60 +50,54 @@
       </div>
       <div class="panel-body">
 
-        <!-- Section: Initial Conditions -->
-        <button class="section-toggle" type="button">
-          Initial Conditions
-          <span class="arrow">▶</span>
-        </button>
-        <div class="section-body" id="sec-init-body"></div>
+        <button class="section-toggle open" type="button">Initialization<span class="arrow">▶</span></button>
+        <div class="section-body open" id="sec-init-body"></div>
 
-        <!-- Section: Elastic -->
-        <button class="section-toggle open" type="button">
-          Elastic Component
-          <span class="arrow">▶</span>
-        </button>
+        <button class="section-toggle open" type="button">Hypo-Elastic<span class="arrow">▶</span></button>
         <div class="section-body open" id="sec-elastic-body"></div>
 
-        <!-- Section: Viscous -->
-        <button class="section-toggle open" type="button">
-          Viscous Component
-          <span class="arrow">▶</span>
-        </button>
+        <button class="section-toggle open" type="button">Viscosity Function<span class="arrow">▶</span></button>
         <div class="section-body open" id="sec-viscous-body"></div>
 
-        <!-- Section: Reference Curve -->
-        <button class="section-toggle" type="button">
-          Reference Curve (Inviscid)
-          <span class="arrow">▶</span>
-        </button>
+        <button class="section-toggle" type="button">Decay Function<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-decay-body"></div>
+
+        <button class="section-toggle" type="button">Reference Curve<span class="arrow">▶</span></button>
         <div class="section-body" id="sec-ref-body"></div>
 
-        <!-- Section: Aging -->
-        <button class="section-toggle" type="button">
-          Aging / Temperature
-          <span class="arrow">▶</span>
-        </button>
+        <button class="section-toggle" type="button">Theta<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-theta-body"></div>
+
+        <button class="section-toggle" type="button">Ageing<span class="arrow">▶</span></button>
         <div class="section-body" id="sec-aging-body"></div>
 
-        <!-- Section: Solver -->
-        <button class="section-toggle" type="button">
-          Solver Settings
-          <span class="arrow">▶</span>
-        </button>
+        <button class="section-toggle" type="button">Initial Viscous History<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-history-body"></div>
+
+        <button class="section-toggle" type="button">Direction<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-direction-body"></div>
+
+        <button class="section-toggle" type="button">Proportion<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-proportion-body"></div>
+
+        <button class="section-toggle" type="button">Lambda_V<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-lambda-body"></div>
+
+        <button class="section-toggle" type="button">Iteration<span class="arrow">▶</span></button>
         <div class="section-body" id="sec-solver-body"></div>
 
       </div>
     </div>
 
-    <!-- Right: Loading sequence editor -->
+    <!-- Right: Loading sequence -->
     <div class="panel">
       <div class="panel-header">
-        <span>Loading Sequence</span>
+        <span>Loading Sequence (.sctr)</span>
         <div class="upload-row">
-          <span>Upload .sctr:</span>
-          <label class="btn-secondary btn-sm" style="cursor:pointer;padding:4px 10px;border:1px solid var(--border);border-radius:4px;font-size:0.78rem;">
+          <label class="btn-secondary btn-sm file-label">
             Browse<input type="file" id="upload-sctr" accept=".sctr,.ctr" style="display:none">
           </label>
+          <button class="btn-secondary btn-sm" id="btn-export-sctr">⬇ Export .sctr</button>
         </div>
       </div>
       <div class="panel-body">
@@ -126,7 +118,7 @@
         <div class="ctrl-btn-row">
           <button class="btn-secondary btn-sm" id="btn-add-row">+ Add Row</button>
         </div>
-        <div style="margin-top:14px;font-size:0.75rem;color:var(--text-muted);line-height:1.6">
+        <div class="ctrl-legend">
           <strong>Event types:</strong><br>
           1 = Strain Rate &nbsp;|&nbsp; 2 = Relaxation &nbsp;|&nbsp; 3 = Strain Accel.<br>
           4 = Stress Rate &nbsp;|&nbsp; 5 = Creep (const. stress) &nbsp;|&nbsp; 6 = StressStrain
@@ -134,58 +126,154 @@
       </div>
     </div>
 
-  </div>
+  </div><!-- /.two-col -->
 
-  <!-- Run area -->
+  <!-- ── Run area ─────────────────────────────────────────────────────────── -->
   <div class="run-area">
-    <button class="btn-primary" id="btn-run" disabled>
-      Run Simulation
-    </button>
+    <button class="btn-primary" id="btn-run" disabled>Run Simulation</button>
     <div class="run-right">
       <span id="status-msg">Loading WASM module…</span>
       <div id="progress-wrap" class="progress-wrap" style="display:none">
-        <div id="progress-bar" class="progress-bar"></div>
+        <div class="progress-track">
+          <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <span id="progress-pct" class="progress-pct">0%</span>
       </div>
     </div>
   </div>
 
-  <!-- Output panel -->
+  <!-- ── Results ──────────────────────────────────────────────────────────── -->
   <div class="panel">
     <div class="panel-header">
       <span>Results</span>
       <button class="btn-secondary btn-sm" id="btn-download" disabled>⬇ Download .dat</button>
     </div>
     <div class="panel-body">
-
-      <!-- Axis selectors (hidden until first run) -->
       <div class="output-controls" id="output-controls" style="display:none">
-        <div class="axis-select">
-          <label>X axis:</label>
-          <select id="axis-x"></select>
-        </div>
-        <div class="axis-select">
-          <label>Y axis:</label>
-          <select id="axis-y"></select>
-        </div>
+        <div class="axis-select"><label>X axis:</label><select id="axis-x"></select></div>
+        <div class="axis-select"><label>Y axis:</label><select id="axis-y"></select></div>
       </div>
-
-      <!-- Chart -->
       <div id="chart-container">
         <div id="chart-placeholder">Run a simulation to see the results here.</div>
       </div>
-
     </div>
   </div>
 
-  <!-- Footer -->
+  <!-- ── Footer ───────────────────────────────────────────────────────────── -->
   <footer>
-    <p>
-      Based on the Nonlinear Three-Component model:
-      Di Benedetto et al. (2002) and Tatsuoka et al. (2002).
-    </p>
+    <p>Developed by Kosit Jariyatatsakorn</p>
+    <p>Based on the Nonlinear Three-Component model:
+       Di Benedetto et al. (2002) and Tatsuoka et al. (2002)</p>
   </footer>
 
 </div><!-- /#app -->
+
+<!-- ── Modals ──────────────────────────────────────────────────────────────── -->
+
+<!-- How to Use -->
+<div id="modal-howto" class="modal-overlay" onclick="closeModalOutside(event,this)">
+  <div class="modal-box">
+    <div class="modal-header"><span>How to Use</span><button onclick="closeModal('modal-howto')">✕</button></div>
+    <div class="modal-body">
+      <h3>1. Enter the password</h3>
+      <p>Use the lab password to access the simulator.</p>
+      <h3>2. Set parameters</h3>
+      <p>The <strong>Parameter Editor</strong> is pre-loaded with the SL1T60 example. Expand any section to edit values. Click <em>Browse</em> to upload a <code>.prm</code> file, or <em>Export .prm</em> to save your current values.</p>
+      <h3>3. Define the loading sequence</h3>
+      <p>The <strong>Loading Sequence</strong> table uses the simplified <code>.sctr</code> format (4 columns). Add/remove rows with the buttons. Upload an existing <code>.sctr</code> file or export to save your sequence.</p>
+      <h3>4. Run the simulation</h3>
+      <p>Click <strong>Run Simulation</strong>. The progress bar shows the percentage of total simulation time completed. When done, results appear as a chart.</p>
+      <h3>5. Interpret results</h3>
+      <p>Default chart: <strong>irreversible strain (ep_ir)</strong> on X-axis vs <strong>stress ratio R = Sigma</strong> (solid) and <strong>Sigma_f</strong> (dashed) on Y-axis. Both stress components are offset by +1 to reflect R = σ₁'/σ₃' starting from 1 at isotropic state. Use the axis selectors to switch to any other output column.</p>
+      <h3>6. Download</h3>
+      <p>Click <strong>⬇ Download .dat</strong> to save the raw tab-separated output for post-processing in MATLAB or Excel.</p>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div id="modal-faq" class="modal-overlay" onclick="closeModalOutside(event,this)">
+  <div class="modal-box">
+    <div class="modal-header"><span>FAQ</span><button onclick="closeModal('modal-faq')">✕</button></div>
+    <div class="modal-body">
+      <h3>What is the NTC model?</h3>
+      <p>The Nonlinear Three-Component (NTC) model decomposes soil deformation into elastic, inviscid (plastic), and viscous (creep) components. It was developed by Di Benedetto et al. and Tatsuoka et al. (2002) and is widely used for time-dependent behaviour of geomaterials.</p>
+      <h3>What does Sigma represent?</h3>
+      <p>Sigma is the stress ratio R = σ₁'/σ₃' (major to minor effective principal stress). In the output file it starts from 0 (= isotropic, R = 1), so +1 is added for display.</p>
+      <h3>What is ep_ir?</h3>
+      <p>ep_ir is the irreversible (plastic + creep) strain. Together with Sigma it forms the primary stress-strain curve.</p>
+      <h3>What is tau?</h3>
+      <p>τ is the creep damage variable. It tracks accumulated viscous deformation history.</p>
+      <h3>How do I run the original 3Comp desktop program?</h3>
+      <p>Download the 3Comp_modern_v2 repository from GitHub and build with Visual Studio 2022.</p>
+      <h3>Why does the progress bar show a percentage?</h3>
+      <p>Progress is calculated as currentTime / totalSimulationTime × 100. The simulation runs in a Web Worker so the browser stays responsive throughout.</p>
+      <h3>Can I change the password?</h3>
+      <p>Yes — see the <em>About</em> section for instructions.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Changelog -->
+<div id="modal-changelog" class="modal-overlay" onclick="closeModalOutside(event,this)">
+  <div class="modal-box">
+    <div class="modal-header"><span>Changelog</span><button onclick="closeModal('modal-changelog')">✕</button></div>
+    <div class="modal-body">
+      <h3>v1.2 — 2026</h3>
+      <ul>
+        <li>Real percentage progress bar via Web Worker chunked execution</li>
+        <li>Dual-line chart: Sigma (solid) + Sigma_f (dashed), offset +1 for correct R display</li>
+        <li>Parameter sections reorganised to match desktop Parameter Editor</li>
+        <li>Export .prm and Export .sctr buttons added</li>
+        <li>Navigation menu bar (How to Use, FAQ, Changelog, About)</li>
+        <li>Dark mode set as default theme</li>
+        <li>Developer credit added</li>
+      </ul>
+      <h3>v1.1 — 2026</h3>
+      <ul>
+        <li>Password changed to lab password</li>
+        <li>Export .prm button added to parameter panel</li>
+        <li>Indeterminate progress bar during simulation</li>
+      </ul>
+      <h3>v1.0 — 2026</h3>
+      <ul>
+        <li>Initial release</li>
+        <li>C++ NTC model compiled to WebAssembly via Emscripten</li>
+        <li>GitHub Actions CI for automated build and deployment</li>
+        <li>Pre-loaded SL1T60 example</li>
+        <li>Interactive Plotly chart with selectable axes</li>
+        <li>Upload/download .prm, .sctr, .dat files</li>
+        <li>Light/dark theme toggle</li>
+        <li>Password-protected access</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- About -->
+<div id="modal-about" class="modal-overlay" onclick="closeModalOutside(event,this)">
+  <div class="modal-box">
+    <div class="modal-header"><span>About</span><button onclick="closeModal('modal-about')">✕</button></div>
+    <div class="modal-body">
+      <h3>NTC Creep Simulator v1.2</h3>
+      <p>Developed by <strong>Kosit Jariyatatsakorn</strong></p>
+      <p>A browser-based interface for the Nonlinear Three-Component (NTC) constitutive model for geomaterials. The C++ model is compiled to WebAssembly via Emscripten and runs entirely in the browser.</p>
+      <h3>References</h3>
+      <ul>
+        <li>Di Benedetto, H., Tatsuoka, F., & Ishihara, M. (2002). Time-dependent shear deformation characteristics of sand and their constitutive modelling. <em>Soils and Foundations</em>, 42(2), 1–22.</li>
+        <li>Tatsuoka, F., Ishihara, M., Di Benedetto, H., & Kuwano, R. (2002). Time-dependent shear deformation characteristics of geomaterials and their simulation. <em>Soils and Foundations</em>, 42(2), 103–129.</li>
+      </ul>
+      <h3>Changing the password</h3>
+      <p>Open <code>src/web/app.js</code> and replace <code>PASSWORD_HASH</code> with the SHA-256 hash of your new password. To get the hash, run this in any browser console:</p>
+      <pre>crypto.subtle.digest("SHA-256", new TextEncoder().encode("yourpassword"))
+  .then(b => console.log(Array.from(new Uint8Array(b))
+    .map(x=>x.toString(16).padStart(2,"0")).join("")))</pre>
+      <p>Then push to <code>main</code> — GitHub Actions will rebuild and redeploy automatically.</p>
+      <h3>Source code</h3>
+      <p><a href="https://github.com/KositJar/ntc-creep-simulator" target="_blank">github.com/KositJar/ntc-creep-simulator</a></p>
+    </div>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>

@@ -1,21 +1,16 @@
-// app.js — NTC Creep Simulator web UI logic
+// app.js — NTC Creep Simulator v1.2
 
-// ── Password gate ────────────────────────────────────────────────────────────
-// SHA-256 hash of the lab password. Change this to update the password.
-// To generate: run  sha256("yourpassword")  in browser console after page loads.
-// Default password: ntclab2024
-const PASSWORD_HASH = "061406b92feb02f5f0843b64f75e214a29e98341d8309718a7f7e68420e65ea1";
+// ── Password gate ─────────────────────────────────────────────────────────────
+const PASSWORD_HASH = "061406b92feb02f5f0843b64f75e214a29e98341d8309718a7f7e68420e65ea1"; // geotech13
 
 async function sha256(msg) {
-  const buf = await crypto.subtle.digest("SHA-256",
-    new TextEncoder().encode(msg));
-  return Array.from(new Uint8Array(buf))
-    .map(b => b.toString(16).padStart(2, "0")).join("");
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,"0")).join("");
 }
 
 async function checkPassword() {
   const input = document.getElementById("pw-input").value;
-  const hash = await sha256(input);
+  const hash  = await sha256(input);
   if (hash === PASSWORD_HASH) {
     sessionStorage.setItem("ntc_auth", "1");
     document.getElementById("gate").classList.add("hidden");
@@ -26,29 +21,35 @@ async function checkPassword() {
   }
 }
 
-document.getElementById("pw-input").addEventListener("keydown", e => {
-  if (e.key === "Enter") checkPassword();
-});
+document.getElementById("pw-input").addEventListener("keydown", e => { if (e.key === "Enter") checkPassword(); });
 document.getElementById("pw-btn").addEventListener("click", checkPassword);
+if (sessionStorage.getItem("ntc_auth") === "1") document.getElementById("gate").classList.add("hidden");
 
-if (sessionStorage.getItem("ntc_auth") === "1") {
-  document.getElementById("gate").classList.add("hidden");
-}
-
-// ── Dark mode ────────────────────────────────────────────────────────────────
+// ── Theme (dark default) ──────────────────────────────────────────────────────
 const themeToggle = document.getElementById("theme-toggle");
 function applyTheme(dark) {
   document.body.classList.toggle("dark", dark);
+  document.body.classList.toggle("light", !dark);
   themeToggle.textContent = dark ? "☀ Light" : "☾ Dark";
 }
-applyTheme(localStorage.getItem("ntc_theme") === "dark");
+// Dark unless user explicitly chose light
+applyTheme(localStorage.getItem("ntc_theme") !== "light");
 themeToggle.addEventListener("click", () => {
   const dark = !document.body.classList.contains("dark");
   localStorage.setItem("ntc_theme", dark ? "dark" : "light");
   applyTheme(dark);
+  if (parsedData) renderChart();
 });
 
-// ── Collapsible sections ─────────────────────────────────────────────────────
+// ── Modals ────────────────────────────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add("open"); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+function closeModalOutside(e, overlay) { if (e.target === overlay) overlay.classList.remove("open"); }
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") document.querySelectorAll(".modal-overlay.open").forEach(m => m.classList.remove("open"));
+});
+
+// ── Collapsible sections ──────────────────────────────────────────────────────
 document.querySelectorAll(".section-toggle").forEach(btn => {
   btn.addEventListener("click", () => {
     btn.classList.toggle("open");
@@ -56,118 +57,156 @@ document.querySelectorAll(".section-toggle").forEach(btn => {
   });
 });
 
-// ── Parameter definitions ────────────────────────────────────────────────────
-// Order matches SetParam::setParam() exactly (56 tokens in .prm file)
+// ── Parameter definitions ─────────────────────────────────────────────────────
+// Order MUST match SetParam::setParam() reading order exactly (56 tokens).
+// dispSec controls which HTML section each field renders into.
 const PARAMS = [
-  // Section: Initial Conditions
-  { id: "Initime",    label: "time₀ (s)",          section: "init",    default: 0 },
-  { id: "Iniep",      label: "ε₀",                  section: "init",    default: 0 },
-  { id: "Iniepd",     label: "ε̇₀ (strain rate)",   section: "init",    default: 0 },
-  { id: "Iniep_ir",   label: "ε_ir,₀",              section: "init",    default: 0 },
-  { id: "Iniepd_ir",  label: "ε̇_ir,₀",             section: "init",    default: 0 },
-  { id: "IniSigma",   label: "R₀ (stress ratio)",   section: "init",    default: 0 },
-  { id: "IniSigma_f", label: "R_f,₀",               section: "init",    default: 0 },
-  { id: "Initau",     label: "τ₀ (damage)",          section: "init",    default: 0 },
-  // Section: Elastic
-  { id: "b",          label: "b",                    section: "elastic", default: 0.5 },
-  { id: "E_ini",      label: "E_ini",                section: "elastic", default: 500 },
-  { id: "Sigma_0",    label: "Σ₀ (ref. stress)",     section: "elastic", default: 1 },
-  // Section: Viscous
-  { id: "r1",         label: "r1 (decay)",           section: "viscous", default: 0.0001 },
-  { id: "r2",         label: "r2 (decay)",           section: "viscous", default: 0.0001 },
-  { id: "ep_ir_0",    label: "ε_ir,₀ (decay)",       section: "viscous", default: 0 },
-  { id: "c",          label: "c (decay)",             section: "viscous", default: 0.3 },
-  { id: "alpha",      label: "α (viscosity)",         section: "viscous", default: 0.36 },
-  { id: "m",          label: "m (viscosity)",         section: "viscous", default: 0.03 },
-  { id: "epd_ir_0",   label: "ε̇_ir,₀",              section: "viscous", default: 1e-7 },
-  { id: "alpha2",     label: "α₂",                   section: "viscous", default: 0.4 },
-  { id: "m2",         label: "m₂",                   section: "viscous", default: 0.55 },
-  { id: "epd_ir_2",   label: "ε̇_ir,₂",             section: "viscous", default: 0.00012 },
-  { id: "epd_ir_int", label: "ε̇_ir,int",            section: "viscous", default: 1.99245e-7 },
-  { id: "gvtype",     label: "gvtype (1 or 2)",       section: "viscous", default: 2 },
-  // Section: Solver
-  { id: "DirectionX", label: "DirectionX (±1)",       section: "solver",  default: 1 },
-  { id: "DirectionY", label: "DirectionY (±1)",       section: "solver",  default: 1 },
-  { id: "IniDSigV",   label: "IniΔΣ_V (history)",    section: "solver",  default: 0 },
-  { id: "Initau_h",   label: "Initau (history)",      section: "solver",  default: 0 },
-  { id: "MaxIter",    label: "MaxIteration",          section: "solver",  default: 2000 },
-  { id: "Precision",  label: "Precision (–log₁₀)",   section: "solver",  default: 7 },
-  { id: "Integration",label: "Integration",           section: "solver",  default: 0 },
-  { id: "lambda_V",   label: "λ_V",                   section: "solver",  default: 1 },
-  { id: "PropX",      label: "ProportionX",           section: "solver",  default: 1 },
-  { id: "PropY",      label: "ProportionY",           section: "solver",  default: 1 },
-  // Section: Reference Curve
-  { id: "RefP0",   label: "RefParam[0]",  section: "ref", default: 0 },
-  { id: "RefP1",   label: "RefParam[1]",  section: "ref", default: 4.44277 },
-  { id: "RefP2",   label: "RefParam[2]",  section: "ref", default: -0.07648 },
-  { id: "RefP3",   label: "RefParam[3]",  section: "ref", default: 1.53056 },
-  { id: "RefP4",   label: "RefParam[4]",  section: "ref", default: 0.68195 },
-  { id: "RefP5",   label: "RefParam[5]",  section: "ref", default: -2.35359 },
-  { id: "RefP6",   label: "RefParam[6]",  section: "ref", default: 0 },
-  { id: "RefP7",   label: "RefParam[7]",  section: "ref", default: 0 },
-  { id: "RefP8",   label: "RefParam[8]",  section: "ref", default: 0 },
-  { id: "RefP9",   label: "RefParam[9]",  section: "ref", default: 0 },
-  { id: "RefFunc", label: "RefFunction",  section: "ref", default: 2 },
-  { id: "th1",     label: "θ₁",           section: "ref", default: -1.42 },
-  { id: "th2",     label: "θ₂",           section: "ref", default: -0.75 },
-  { id: "rf_strain", label: "rf_strain",  section: "ref", default: 7.66 },
-  { id: "curve",   label: "curve",        section: "ref", default: 1 },
-  // Section: Aging
-  { id: "a_f",       label: "a_f",        section: "aging", default: 1 },
-  { id: "b_f",       label: "b_f",        section: "aging", default: 0 },
-  { id: "lambda_f",  label: "λ_f",        section: "aging", default: 0 },
-  { id: "r1_f",      label: "r1_f",       section: "aging", default: 8.5 },
-  { id: "r2_f",      label: "r2_f",       section: "aging", default: 1 },
-  { id: "ep_ir_0_f", label: "ε_ir,₀_f",  section: "aging", default: 0 },
-  { id: "c_f",       label: "c_f",        section: "aging", default: 0 },
-  { id: "A_f",       label: "A_f (temp/aging factor)", section: "aging", default: 0.957 },
+  // 1–8: Initial conditions
+  { id:"Initime",    label:"time",               dispSec:"init",       default:0 },
+  { id:"Iniep",      label:"ep",                 dispSec:"init",       default:0 },
+  { id:"Iniepd",     label:"epd",                dispSec:"init",       default:0 },
+  { id:"Iniep_ir",   label:"ep_ir",              dispSec:"init",       default:0 },
+  { id:"Iniepd_ir",  label:"epd_ir",             dispSec:"init",       default:0 },
+  { id:"IniSigma",   label:"Sigma",              dispSec:"init",       default:0 },
+  { id:"IniSigma_f", label:"Sigma_r",            dispSec:"init",       default:0 },
+  { id:"Initau",     label:"tau",                dispSec:"init",       default:0 },
+  // 9–11: Hypo-Elastic
+  { id:"b",          label:"b",                  dispSec:"elastic",    default:0.5 },
+  { id:"E_ini",      label:"E_ini",              dispSec:"elastic",    default:500 },
+  { id:"Sigma_0",    label:"Sigma_0",            dispSec:"elastic",    default:1 },
+  // 12–15: Decay function
+  { id:"r1",         label:"r1",                 dispSec:"decay",      default:0.0001 },
+  { id:"r2",         label:"r2",                 dispSec:"decay",      default:0.0001 },
+  { id:"ep_ir_0",    label:"ep_ir_0",            dispSec:"decay",      default:0 },
+  { id:"c",          label:"c",                  dispSec:"decay",      default:0.3 },
+  // 16–23: Viscosity function
+  { id:"alpha",      label:"Alpha",              dispSec:"viscous",    default:0.36 },
+  { id:"m",          label:"m",                  dispSec:"viscous",    default:0.03 },
+  { id:"epd_ir_0",   label:"epd_ir_0",           dispSec:"viscous",    default:1e-7 },
+  { id:"alpha2",     label:"Alpha*",             dispSec:"viscous",    default:0.4 },
+  { id:"m2",         label:"1+b",                dispSec:"viscous",    default:0.55 },
+  { id:"epd_ir_2",   label:"epd_ir_0 (2nd)",     dispSec:"viscous",    default:0.00012 },
+  { id:"epd_ir_int", label:"epd_ir_int",         dispSec:"viscous",    default:1.99245e-7 },
+  { id:"gvtype",     label:"Type  0:gv1 1:gv2 2:mix", dispSec:"viscous", default:2 },
+  // 24–25: Direction
+  { id:"DirectionX", label:"Dx",                 dispSec:"direction",  default:1 },
+  { id:"DirectionY", label:"Dy",                 dispSec:"direction",  default:1 },
+  // 26–27: Initial viscous history
+  { id:"IniDSigV",   label:"Last DSigma_V",      dispSec:"history",    default:0 },
+  { id:"Initau_h",   label:"Last_tau",           dispSec:"history",    default:0 },
+  // 28–30: Iteration / solver
+  { id:"MaxIter",    label:"Max Iteration",      dispSec:"solver",     default:2000 },
+  { id:"Precision",  label:"Precision (−log₁₀)", dispSec:"solver",     default:7 },
+  { id:"Integration",label:"Integration",        dispSec:"solver",     default:0 },
+  // 31: Lambda
+  { id:"lambda_V",   label:"Lambda_V",           dispSec:"lambda",     default:1 },
+  // 32–33: Proportion
+  { id:"PropX",      label:"Px",                 dispSec:"proportion", default:1 },
+  { id:"PropY",      label:"Py",                 dispSec:"proportion", default:1 },
+  // 34–43: Reference curve parameters
+  { id:"RefP0",  label:"0",  dispSec:"ref", default:0 },
+  { id:"RefP1",  label:"1",  dispSec:"ref", default:4.44277 },
+  { id:"RefP2",  label:"2",  dispSec:"ref", default:-0.07648 },
+  { id:"RefP3",  label:"3",  dispSec:"ref", default:1.53056 },
+  { id:"RefP4",  label:"4",  dispSec:"ref", default:0.68195 },
+  { id:"RefP5",  label:"5",  dispSec:"ref", default:-2.35359 },
+  { id:"RefP6",  label:"6",  dispSec:"ref", default:0 },
+  { id:"RefP7",  label:"7",  dispSec:"ref", default:0 },
+  { id:"RefP8",  label:"8",  dispSec:"ref", default:0 },
+  { id:"RefP9",  label:"9",  dispSec:"ref", default:0 },
+  // 44: Reference function type
+  { id:"RefFunc", label:"Type  0:Poly 1:Exp 2:EPS 3–4:DST", dispSec:"ref", default:2 },
+  // 45–48: Theta
+  { id:"th1",       label:"theta1",  dispSec:"theta", default:-1.42 },
+  { id:"th2",       label:"theta2",  dispSec:"theta", default:-0.75 },
+  { id:"rf_strain", label:"ep_ir_0", dispSec:"theta", default:7.66 },
+  { id:"curve",     label:"c",       dispSec:"theta", default:1 },
+  // 49–56: Ageing
+  { id:"a_f",       label:"a_f",       dispSec:"aging", default:1 },
+  { id:"b_f",       label:"b_f",       dispSec:"aging", default:0 },
+  { id:"lambda_f",  label:"lambda_f",  dispSec:"aging", default:1 },
+  { id:"r1_f",      label:"r1_f",      dispSec:"aging", default:1 },
+  { id:"r2_f",      label:"r2_f",      dispSec:"aging", default:1 },
+  { id:"ep_ir_0_f", label:"ep_ir_0_f", dispSec:"aging", default:0 },
+  { id:"c_f",       label:"c_f",       dispSec:"aging", default:1 },
+  { id:"A_f",       label:"A_f",       dispSec:"aging", default:0.957 },
 ];
 
-// Build parameter input fields into DOM
+// ── Build parameter form ──────────────────────────────────────────────────────
+const SECTION_BODIES = {
+  init:       "sec-init-body",
+  elastic:    "sec-elastic-body",
+  viscous:    "sec-viscous-body",
+  decay:      "sec-decay-body",
+  ref:        "sec-ref-body",
+  theta:      "sec-theta-body",
+  aging:      "sec-aging-body",
+  history:    "sec-history-body",
+  direction:  "sec-direction-body",
+  proportion: "sec-proportion-body",
+  lambda:     "sec-lambda-body",
+  solver:     "sec-solver-body",
+};
+
 function buildParamEditor() {
-  const sections = {
-    init:    { title: "Initial Conditions",  el: document.getElementById("sec-init-body") },
-    elastic: { title: "Elastic Component",   el: document.getElementById("sec-elastic-body") },
-    viscous: { title: "Viscous Component",   el: document.getElementById("sec-viscous-body") },
-    solver:  { title: "Solver & Control",    el: document.getElementById("sec-solver-body") },
-    ref:     { title: "Reference Curve",     el: document.getElementById("sec-ref-body") },
-    aging:   { title: "Aging",               el: document.getElementById("sec-aging-body") },
-  };
+  const grids = {};
   PARAMS.forEach(p => {
-    const sec = sections[p.section];
-    if (!sec || !sec.el) return;
-    let grid = sec.el.querySelector(".param-grid");
-    if (!grid) { grid = document.createElement("div"); grid.className = "param-grid"; sec.el.appendChild(grid); }
-    const div = document.createElement("div"); div.className = "field";
+    const bodyId = SECTION_BODIES[p.dispSec];
+    if (!bodyId) return;
+    if (!grids[p.dispSec]) {
+      const el = document.getElementById(bodyId);
+      if (!el) return;
+      grids[p.dispSec] = document.createElement("div");
+      grids[p.dispSec].className = "param-grid";
+      el.appendChild(grids[p.dispSec]);
+    }
+    const div = document.createElement("div");
+    div.className = "field";
     div.innerHTML = `<label for="p-${p.id}">${p.label}</label>
       <input type="text" id="p-${p.id}" value="${p.default}" autocomplete="off">`;
-    grid.appendChild(div);
+    grids[p.dispSec].appendChild(div);
   });
 }
 buildParamEditor();
 
-// ── Control sequence event types ─────────────────────────────────────────────
+// ── Assemble .prm text (serialization order = PARAMS array order) ─────────────
+function assemblePrm() {
+  return PARAMS.map(p => {
+    const el = document.getElementById(`p-${p.id}`);
+    return (el ? el.value.trim() : String(p.default));
+  }).join("\n") + "\n";
+}
+
+// ── Load .prm text into form ──────────────────────────────────────────────────
+function loadPrmText(text) {
+  const tokens = text.trim().split(/\s+/).filter(t => t.length > 0);
+  PARAMS.forEach((p, i) => {
+    const el = document.getElementById(`p-${p.id}`);
+    if (el && tokens[i] !== undefined) el.value = tokens[i];
+  });
+}
+
+// ── Control sequence ──────────────────────────────────────────────────────────
 const EVENT_TYPES = [
-  { value: 1, label: "1 – Strain Rate" },
-  { value: 2, label: "2 – Relaxation" },
-  { value: 3, label: "3 – Strain Accel." },
-  { value: 4, label: "4 – Stress Rate" },
-  { value: 5, label: "5 – Creep" },
-  { value: 6, label: "6 – StressStrain" },
+  { value:1, label:"1 – Strain Rate" },
+  { value:2, label:"2 – Relaxation" },
+  { value:3, label:"3 – Strain Accel." },
+  { value:4, label:"4 – Stress Rate" },
+  { value:5, label:"5 – Creep" },
+  { value:6, label:"6 – StressStrain" },
 ];
 
-function addCtrlRow(tableBody, type = 1, tStart = 0, tEnd = 0, val = 0) {
+function addCtrlRow(tbody, type=1, tStart=0, tEnd=0, val=0) {
   const tr = document.createElement("tr");
   const opts = EVENT_TYPES.map(e =>
-    `<option value="${e.value}"${e.value == type ? " selected" : ""}>${e.label}</option>`
-  ).join("");
+    `<option value="${e.value}"${e.value==type?" selected":""}>${e.label}</option>`).join("");
   tr.innerHTML = `
     <td><select class="ctrl-row-type">${opts}</select></td>
-    <td><input class="ctrl-row-num" type="text" value="${tStart}" placeholder="start time"></td>
-    <td><input class="ctrl-row-num" type="text" value="${tEnd}" placeholder="end time"></td>
-    <td><input class="ctrl-row-num" type="text" value="${val}" placeholder="value"></td>
-    <td><button class="btn-icon" onclick="this.closest('tr').remove()" title="Remove row">✕</button></td>`;
-  tableBody.appendChild(tr);
+    <td><input class="ctrl-row-num" type="text" value="${tStart}"></td>
+    <td><input class="ctrl-row-num" type="text" value="${tEnd}"></td>
+    <td><input class="ctrl-row-num" type="text" value="${val}"></td>
+    <td><button class="btn-icon" onclick="this.closest('tr').remove()">✕</button></td>`;
+  tbody.appendChild(tr);
 }
 
 function initCtrlTable(rows) {
@@ -177,258 +216,191 @@ function initCtrlTable(rows) {
 }
 
 document.getElementById("btn-add-row").addEventListener("click", () => {
-  const tbody = document.getElementById("ctrl-tbody");
-  const rows = tbody.querySelectorAll("tr");
+  const rows = document.getElementById("ctrl-tbody").querySelectorAll("tr");
   let lastEnd = 0;
-  if (rows.length > 0) {
-    const lastRow = rows[rows.length - 1];
-    lastEnd = parseFloat(lastRow.querySelectorAll("input")[1].value) || 0;
+  if (rows.length) {
+    const last = rows[rows.length-1].querySelectorAll("input");
+    lastEnd = parseFloat(last[1].value) || 0;
   }
-  addCtrlRow(tbody, 1, lastEnd, lastEnd, 0);
+  addCtrlRow(document.getElementById("ctrl-tbody"), 1, lastEnd, lastEnd, 0);
 });
 
-// ── Load example data ────────────────────────────────────────────────────────
-// Example SL1T60 control rows (parsed from SL1T60.sctr):
-const EXAMPLE_CTRL = [
-  [1, 0,     191,   0.0008206],
-  [5, 191,   11627, 0],
-  [1, 11627, 11765, 0.000754],
-  [5, 11765, 23114, 0],
-  [1, 23114, 23255, 0.00118],
-  [5, 23255, 34588, 0],
-  [1, 34588, 46138, 0.00125],
-];
-
-async function loadExample() {
-  // Load prm file and populate fields
-  try {
-    const res = await fetch("example/SL1T60.prm");
-    if (res.ok) {
-      const text = await res.text();
-      loadPrmText(text);
-    }
-  } catch (e) { /* fall back to PARAMS defaults */ }
-
-  initCtrlTable(EXAMPLE_CTRL);
-}
-
-loadExample();
-
-// ── Parse and load .prm file text ────────────────────────────────────────────
-function loadPrmText(text) {
-  const tokens = text.trim().split(/\s+/).filter(t => t.length > 0);
-  PARAMS.forEach((p, i) => {
-    const el = document.getElementById(`p-${p.id}`);
-    if (el && tokens[i] !== undefined) el.value = tokens[i];
+function assembleSctr() {
+  let lines = "";
+  document.getElementById("ctrl-tbody").querySelectorAll("tr").forEach(tr => {
+    const sel = tr.querySelector("select").value;
+    const inp = tr.querySelectorAll("input");
+    lines += `${sel}\t${inp[0].value}\t${inp[1].value}\t${inp[2].value}\n`;
   });
+  return lines + "0\n";
 }
 
-// ── Parse and load .sctr file text ───────────────────────────────────────────
 function loadSctrText(text) {
   const rows = [];
   text.trim().split("\n").forEach(line => {
-    const parts = line.trim().split(/\s+/);
-    if (parts.length >= 1) {
-      const type = parseInt(parts[0]);
-      if (isNaN(type) || type === 0) return;
-      rows.push([
-        type,
-        parseFloat(parts[1] || 0),
-        parseFloat(parts[2] || 0),
-        parseFloat(parts[3] || 0),
-      ]);
-    }
+    const p = line.trim().split(/\s+/);
+    const t = parseInt(p[0]);
+    if (isNaN(t) || t === 0) return;
+    rows.push([t, parseFloat(p[1]||0), parseFloat(p[2]||0), parseFloat(p[3]||0)]);
   });
-  if (rows.length > 0) initCtrlTable(rows);
+  if (rows.length) initCtrlTable(rows);
 }
 
-// ── Export .prm ───────────────────────────────────────────────────────────────
-document.getElementById("btn-export-prm").addEventListener("click", () => {
-  const content = assemblePrm();
-  const blob = new Blob([content], { type: "text/plain" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "parameters.prm";
-  a.click();
-  URL.revokeObjectURL(a.href);
-});
+// ── Example data (SL1T60) ─────────────────────────────────────────────────────
+const EXAMPLE_CTRL = [
+  [1,0,191,0.0008206],[5,191,11627,0],[1,11627,11765,0.000754],
+  [5,11765,23114,0],[1,23114,23255,0.00118],[5,23255,34588,0],[1,34588,46138,0.00125],
+];
 
-// ── File upload handlers ─────────────────────────────────────────────────────
+async function loadExample() {
+  try {
+    const res = await fetch("example/SL1T60.prm");
+    if (res.ok) loadPrmText(await res.text());
+  } catch (_) {}
+  initCtrlTable(EXAMPLE_CTRL);
+}
+loadExample();
+
+// ── File uploads ──────────────────────────────────────────────────────────────
 document.getElementById("upload-prm").addEventListener("change", e => {
-  const file = e.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => loadPrmText(ev.target.result);
-  reader.readAsText(file);
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = ev => loadPrmText(ev.target.result); r.readAsText(f);
   e.target.value = "";
 });
-
 document.getElementById("upload-sctr").addEventListener("change", e => {
-  const file = e.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => loadSctrText(ev.target.result);
-  reader.readAsText(file);
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = ev => loadSctrText(ev.target.result); r.readAsText(f);
   e.target.value = "";
 });
 
-// ── Assemble .prm text from form ─────────────────────────────────────────────
-function assemblePrm() {
-  return PARAMS.map(p => {
-    const el = document.getElementById(`p-${p.id}`);
-    return el ? el.value.trim() : String(p.default);
-  }).join("\n") + "\n";
+// ── Export buttons ────────────────────────────────────────────────────────────
+function downloadText(content, filename) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([content], {type:"text/plain"}));
+  a.download = filename; a.click(); URL.revokeObjectURL(a.href);
 }
+document.getElementById("btn-export-prm").addEventListener("click",
+  () => downloadText(assemblePrm(), "parameters.prm"));
+document.getElementById("btn-export-sctr").addEventListener("click",
+  () => downloadText(assembleSctr(), "loading.sctr"));
 
-// ── Assemble .sctr text from control table ────────────────────────────────────
-function assembleSctr() {
-  const rows = document.getElementById("ctrl-tbody").querySelectorAll("tr");
-  let lines = "";
-  rows.forEach(tr => {
-    const sel = tr.querySelector("select").value;
-    const inputs = tr.querySelectorAll("input");
-    lines += `${sel}\t${inputs[0].value}\t${inputs[1].value}\t${inputs[2].value}\n`;
-  });
-  lines += "0\n";
-  return lines;
-}
-
-// ── WASM loading ──────────────────────────────────────────────────────────────
-let ntcModule = null;
-
-function loadWasm() {
-  if (typeof NTCSolver === "undefined") {
-    setStatus("WASM module not loaded. Check that ntc_solver.js is present.", "error");
-    return;
-  }
-  NTCSolver().then(m => {
-    ntcModule = m;
-    setStatus("Ready — click Run to simulate.", "");
-    document.getElementById("btn-run").disabled = false;
-  }).catch(err => {
-    setStatus("Failed to initialize WASM module: " + err, "error");
-  });
-}
-
-window.addEventListener("load", () => {
-  // Defer WASM load slightly so Plotly and DOM settle
-  setTimeout(loadWasm, 100);
-});
-
-// ── Status messages & progress bar ───────────────────────────────────────────
-function setStatus(msg, type = "") {
+// ── Status & progress bar ─────────────────────────────────────────────────────
+function setStatus(msg, type="") {
   const el = document.getElementById("status-msg");
-  el.textContent = msg;
-  el.className = type;
+  el.textContent = msg; el.className = type;
 }
 
-function showProgress(state) {
-  // state: "running" | "done" | "error" | "hidden"
+function showProgress(state, pct=0) {
   const wrap = document.getElementById("progress-wrap");
   const bar  = document.getElementById("progress-bar");
-  if (state === "hidden") {
-    wrap.style.display = "none";
-    bar.className = "progress-bar";
-    return;
-  }
-  wrap.style.display = "block";
+  const txt  = document.getElementById("progress-pct");
+  if (state === "hidden") { wrap.style.display="none"; bar.className="progress-bar"; return; }
+  wrap.style.display = "flex";
   bar.className = "progress-bar";
-  if (state === "running")   bar.classList.add("indeterminate");
-  else if (state === "done") bar.classList.add("complete");
-  else if (state === "error") bar.classList.add("error-bar");
+  if (state === "running") {
+    bar.style.width = pct + "%";
+    txt.textContent = pct + "%";
+  } else if (state === "done") {
+    bar.classList.add("complete"); bar.style.width="100%"; txt.textContent="100%";
+  } else if (state === "error") {
+    bar.classList.add("error-bar"); bar.style.width="100%"; txt.textContent="Error";
+  }
 }
 
-// ── Run simulation ────────────────────────────────────────────────────────────
+// ── Web Worker ────────────────────────────────────────────────────────────────
+let simWorker = null;
 let lastOutputData = null;
 
-document.getElementById("btn-run").addEventListener("click", () => {
-  if (!ntcModule) { setStatus("WASM module not ready yet.", "error"); return; }
-
-  const paramContent = assemblePrm();
-  const ctrlContent  = assembleSctr();
-
-  setStatus("Running simulation…", "");
-  showProgress("running");
-  document.getElementById("btn-run").disabled = true;
-
-  // Give the browser one frame to paint the progress bar before WASM blocks the thread
-  setTimeout(() => {
-    try {
-      const result = ntcModule.runSimulation(paramContent, ctrlContent);
+function initWorker() {
+  simWorker = new Worker("worker.js");
+  simWorker.onmessage = function(e) {
+    const { type, value, data, msg } = e.data;
+    if (type === "ready") {
+      setStatus("Ready — click Run to simulate.", "");
       document.getElementById("btn-run").disabled = false;
-
-      if (result.startsWith("ERROR:")) {
-        setStatus(result, "error");
-        showProgress("error");
-        setTimeout(() => showProgress("hidden"), 2000);
-        return;
-      }
-
-      lastOutputData = result;
-      const n = countRows(result);
+    } else if (type === "progress") {
+      showProgress("running", value);
+      if (value < 100) setStatus(`Running… ${value}%`, "");
+    } else if (type === "result") {
+      document.getElementById("btn-run").disabled = false;
+      lastOutputData = data;
+      const n = data.trim().split("\n").length - 1;
       setStatus(`Done — ${n} data points.`, "success");
       showProgress("done");
-      setTimeout(() => showProgress("hidden"), 1500);
+      setTimeout(() => showProgress("hidden"), 1800);
       document.getElementById("btn-download").disabled = false;
-      plotResult(result);
-    } catch (e) {
+      plotResult(data);
+    } else if (type === "error") {
       document.getElementById("btn-run").disabled = false;
-      setStatus("Runtime error: " + e.message, "error");
+      setStatus(msg, "error");
       showProgress("error");
-      setTimeout(() => showProgress("hidden"), 2000);
+      setTimeout(() => showProgress("hidden"), 2500);
     }
-  }, 30);
-});
-
-function countRows(text) {
-  return text.trim().split("\n").length - 1; // subtract header
+  };
+  simWorker.onerror = function(e) {
+    setStatus("Worker error: " + e.message, "error");
+    document.getElementById("btn-run").disabled = false;
+  };
 }
 
+window.addEventListener("load", () => { setTimeout(initWorker, 100); });
+
+// ── Run button ────────────────────────────────────────────────────────────────
+document.getElementById("btn-run").addEventListener("click", () => {
+  if (!simWorker) { setStatus("Worker not ready.", "error"); return; }
+  document.getElementById("btn-run").disabled = true;
+  setStatus("Starting…", "");
+  showProgress("running", 0);
+  simWorker.postMessage({
+    type: "run",
+    paramContent: assemblePrm(),
+    ctrlContent:  assembleSctr(),
+  });
+});
+
 // ── Parse output data ─────────────────────────────────────────────────────────
+let parsedData = null;
+
 function parseOutput(text) {
   const lines = text.trim().split("\n");
-  if (lines.length < 2) return { headers: [], columns: {} };
+  if (lines.length < 2) return { headers:[], columns:{} };
   const headers = lines[0].split("\t").map(h => h.trim());
   const columns = {};
   headers.forEach(h => columns[h] = []);
   for (let i = 1; i < lines.length; i++) {
     const vals = lines[i].split("\t");
-    headers.forEach((h, j) => {
-      const v = parseFloat(vals[j]);
-      columns[h].push(isNaN(v) ? 0 : v);
-    });
+    headers.forEach((h, j) => { const v = parseFloat(vals[j]); columns[h].push(isNaN(v)?0:v); });
   }
   return { headers, columns };
 }
 
 // ── Axis selector population ──────────────────────────────────────────────────
 function populateAxisSelectors(headers) {
-  ["axis-x", "axis-y"].forEach(id => {
+  ["axis-x","axis-y"].forEach(id => {
     const sel = document.getElementById(id);
     const prev = sel.value;
     sel.innerHTML = headers.map(h => `<option value="${h}">${h}</option>`).join("");
     if (headers.includes(prev)) sel.value = prev;
   });
-  // Default: X = ep_ir, Y = Sigma
   const xSel = document.getElementById("axis-x");
   const ySel = document.getElementById("axis-y");
-  if (!xSel.value || !document.querySelector("#axis-x option[value='ep_ir']") === false) {
-    if (headers.includes("ep_ir")) xSel.value = "ep_ir";
-  }
-  if (!ySel.value || headers.includes("Sigma")) {
-    if (headers.includes("Sigma")) ySel.value = "Sigma";
-  }
+  if (headers.includes("ep_ir")) xSel.value = "ep_ir";
+  if (headers.includes("Sigma")) ySel.value = "Sigma";
 }
 
-// ── Plotly chart ──────────────────────────────────────────────────────────────
-let parsedData = null;
+// ── Plot (two-line default chart) ─────────────────────────────────────────────
+// Sigma and Sigma_f are offset +1 for display (R starts at 1, not 0)
+const STRESS_COLS = new Set(["Sigma","Sigma_f","Sigma_fy"]);
+
+function applyOffset(key, arr) {
+  return STRESS_COLS.has(key) ? arr.map(v => v + 1) : arr;
+}
 
 function plotResult(text) {
   parsedData = parseOutput(text);
   if (!parsedData.headers.length) return;
-
   populateAxisSelectors(parsedData.headers);
   renderChart();
-
-  // Show axis controls
   document.getElementById("output-controls").style.display = "flex";
 }
 
@@ -437,50 +409,58 @@ function renderChart() {
   const xKey = document.getElementById("axis-x").value;
   const yKey = document.getElementById("axis-y").value;
   const xData = parsedData.columns[xKey] || [];
-  const yData = parsedData.columns[yKey] || [];
 
-  const isDark = document.body.classList.contains("dark");
-  const textColor   = isDark ? "#e8eaf0" : "#1a1a2e";
-  const gridColor   = isDark ? "#2d3348" : "#e8ecf0";
-  const paperColor  = isDark ? "#1e2130" : "#f5f7fa";
-  const plotBg      = isDark ? "#1e2130" : "#ffffff";
+  const isDark     = document.body.classList.contains("dark");
+  const textColor  = isDark ? "#e8eaf0" : "#1a1a2e";
+  const gridColor  = isDark ? "#2d3348" : "#e8ecf0";
+  const paperColor = isDark ? "#1e2130" : "#f5f7fa";
+  const plotBg     = isDark ? "#1e2130" : "#ffffff";
 
-  const trace = {
-    x: xData, y: yData,
+  const traces = [];
+
+  // Primary trace
+  traces.push({
+    x: xData,
+    y: applyOffset(yKey, parsedData.columns[yKey] || []),
     mode: "lines",
-    line: { color: "#2563eb", width: 1.5 },
-    type: "scatter",
-    name: `${yKey} vs ${xKey}`,
-  };
+    line: { color:"#3b82f6", width:1.8 },
+    name: STRESS_COLS.has(yKey) ? yKey + "+1" : yKey,
+  });
+
+  // Second trace: Sigma_f dashed, only when primary Y is Sigma
+  if (yKey === "Sigma" && parsedData.columns["Sigma_f"]) {
+    traces.push({
+      x: xData,
+      y: applyOffset("Sigma_f", parsedData.columns["Sigma_f"]),
+      mode: "lines",
+      line: { color:"#f97316", width:1.5, dash:"dash" },
+      name: "Sigma_f+1",
+    });
+  }
 
   const layout = {
-    xaxis: { title: xKey, color: textColor, gridcolor: gridColor, zerolinecolor: gridColor },
-    yaxis: { title: yKey, color: textColor, gridcolor: gridColor, zerolinecolor: gridColor },
+    xaxis: { title:xKey, color:textColor, gridcolor:gridColor, zerolinecolor:gridColor },
+    yaxis: {
+      title: STRESS_COLS.has(yKey) ? yKey+" (+1 offset)" : yKey,
+      color:textColor, gridcolor:gridColor, zerolinecolor:gridColor
+    },
     paper_bgcolor: paperColor,
-    plot_bgcolor: plotBg,
-    font: { color: textColor, size: 12 },
-    margin: { l: 60, r: 20, t: 20, b: 50 },
-    showlegend: false,
+    plot_bgcolor:  plotBg,
+    font: { color:textColor, size:12 },
+    margin: { l:60, r:20, t:20, b:50 },
+    legend: { orientation:"h", y:-0.18, font:{size:11} },
+    showlegend: traces.length > 1,
   };
 
-  const config = { responsive: true, displayModeBar: true, displaylogo: false };
-  Plotly.newPlot("chart-container", [trace], layout, config);
+  Plotly.newPlot("chart-container", traces, layout,
+    { responsive:true, displayModeBar:true, displaylogo:false });
   document.getElementById("chart-placeholder").style.display = "none";
 }
 
 document.getElementById("axis-x").addEventListener("change", renderChart);
 document.getElementById("axis-y").addEventListener("change", renderChart);
 
-// Re-render chart on theme change to update colors
-themeToggle.addEventListener("click", () => { if (parsedData) renderChart(); });
-
-// ── Download output ───────────────────────────────────────────────────────────
+// ── Download .dat ─────────────────────────────────────────────────────────────
 document.getElementById("btn-download").addEventListener("click", () => {
-  if (!lastOutputData) return;
-  const blob = new Blob([lastOutputData], { type: "text/plain" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "ntc_output.dat";
-  a.click();
-  URL.revokeObjectURL(a.href);
+  if (lastOutputData) downloadText(lastOutputData, "ntc_output.dat");
 });
