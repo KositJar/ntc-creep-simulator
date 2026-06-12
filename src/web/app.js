@@ -273,6 +273,26 @@ document.getElementById("upload-sctr").addEventListener("change", e => {
   e.target.value = "";
 });
 
+// ── Project name & timestamp ──────────────────────────────────────────────────
+function makeTimestamp() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2,"0");
+  return `ntc_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+}
+
+function getProjectName() {
+  const el = document.getElementById("project-name");
+  return (el && el.value.trim()) ? el.value.trim() : makeTimestamp();
+}
+
+function setProjectTimestamp() {
+  const el = document.getElementById("project-name");
+  if (el) el.value = makeTimestamp();
+}
+
+// Set initial timestamp on load
+setProjectTimestamp();
+
 // ── Export buttons ────────────────────────────────────────────────────────────
 function downloadText(content, filename) {
   const a = document.createElement("a");
@@ -280,9 +300,9 @@ function downloadText(content, filename) {
   a.download = filename; a.click(); URL.revokeObjectURL(a.href);
 }
 document.getElementById("btn-export-prm").addEventListener("click",
-  () => downloadText(assemblePrm(), "parameters.prm"));
+  () => downloadText(assemblePrm(), getProjectName() + ".prm"));
 document.getElementById("btn-export-sctr").addEventListener("click",
-  () => downloadText(assembleSctr(), "loading.sctr"));
+  () => downloadText(assembleSctr(), getProjectName() + ".sctr"));
 
 // ── Status & progress bar ─────────────────────────────────────────────────────
 function setStatus(msg, type="") {
@@ -329,6 +349,7 @@ function initWorker() {
       showProgress("done");
       setTimeout(() => showProgress("hidden"), 1800);
       document.getElementById("btn-download").disabled = false;
+      setProjectTimestamp();   // refresh timestamp for next download
       plotResult(data);
     } else if (type === "error") {
       document.getElementById("btn-run").disabled = false;
@@ -462,5 +483,5 @@ document.getElementById("axis-y").addEventListener("change", renderChart);
 
 // ── Download .dat ─────────────────────────────────────────────────────────────
 document.getElementById("btn-download").addEventListener("click", () => {
-  if (lastOutputData) downloadText(lastOutputData, "ntc_output.dat");
+  if (lastOutputData) downloadText(lastOutputData, getProjectName() + ".dat");
 });

@@ -129,8 +129,18 @@ button:disabled { opacity:0.45; cursor:not-allowed; }
 .btn-icon:hover { background:var(--error-bg); border-color:var(--error); }
 .btn-sm { padding:4px 10px; font-size:0.77rem; }
 
+/* ── Export btn + extension label ─────────────── */
+.export-btn-wrap { display:flex; align-items:center; gap:3px; }
+.ext-label { font-size:0.75rem; font-family:monospace; color:var(--text-muted); user-select:none; }
+
+/* ── Project name field ────────────────────────── */
+.project-name-wrap { display:flex; flex-direction:column; gap:2px; }
+.project-name-label { font-size:0.72rem; color:var(--text-muted); font-weight:500; }
+.project-name-input { padding:6px 10px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-secondary); color:var(--text); font-size:0.82rem; font-family:monospace; outline:none; width:230px; }
+.project-name-input:focus { border-color:var(--accent); }
+
 /* ── Run area ──────────────────────────────────── */
-.run-area { display:flex; align-items:center; gap:16px; padding:14px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin-bottom:16px; }
+.run-area { display:flex; align-items:center; gap:16px; padding:14px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin-bottom:16px; flex-wrap:wrap; }
 .run-right { display:flex; flex-direction:column; gap:5px; flex:1; }
 #status-msg { font-size:0.82rem; color:var(--text-muted); }
 #status-msg.error   { color:var(--error); }

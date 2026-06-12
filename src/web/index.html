@@ -45,7 +45,10 @@
           <label class="btn-secondary btn-sm file-label">
             Browse<input type="file" id="upload-prm" accept=".prm" style="display:none">
           </label>
-          <button class="btn-secondary btn-sm" id="btn-export-prm">⬇ Export .prm</button>
+          <div class="export-btn-wrap">
+            <button class="btn-secondary btn-sm" id="btn-export-prm">⬇ Export</button>
+            <span class="ext-label">.prm</span>
+          </div>
         </div>
       </div>
       <div class="panel-body">
@@ -97,7 +100,10 @@
           <label class="btn-secondary btn-sm file-label">
             Browse<input type="file" id="upload-sctr" accept=".sctr,.ctr" style="display:none">
           </label>
-          <button class="btn-secondary btn-sm" id="btn-export-sctr">⬇ Export .sctr</button>
+          <div class="export-btn-wrap">
+            <button class="btn-secondary btn-sm" id="btn-export-sctr">⬇ Export</button>
+            <span class="ext-label">.sctr</span>
+          </div>
         </div>
       </div>
       <div class="panel-body">
@@ -131,6 +137,12 @@
   <!-- ── Run area ─────────────────────────────────────────────────────────── -->
   <div class="run-area">
     <button class="btn-primary" id="btn-run" disabled>Run Simulation</button>
+    <div class="project-name-wrap">
+      <label class="project-name-label" for="project-name">Project name</label>
+      <div class="project-name-row">
+        <input type="text" id="project-name" class="project-name-input" placeholder="ntc_YYYY-MM-DD_HHMMSS" autocomplete="off">
+      </div>
+    </div>
     <div class="run-right">
       <span id="status-msg">Loading WASM module…</span>
       <div id="progress-wrap" class="progress-wrap" style="display:none">
@@ -146,7 +158,10 @@
   <div class="panel">
     <div class="panel-header">
       <span>Results</span>
-      <button class="btn-secondary btn-sm" id="btn-download" disabled>⬇ Download .dat</button>
+      <div class="export-btn-wrap">
+        <button class="btn-secondary btn-sm" id="btn-download" disabled>⬇ Download</button>
+        <span class="ext-label">.dat</span>
+      </div>
     </div>
     <div class="panel-body">
       <div class="output-controls" id="output-controls" style="display:none">
