@@ -196,52 +196,102 @@ const EVENT_TYPES = [
   { value:6, label:"6 – StressStrain" },
 ];
 
-function addCtrlRow(tbody, type=1, tStart=0, tEnd=0, val=0) {
+// ── Control table mode (.sctr = 4-col, .ctr = 5-col) ─────────────────────────
+let ctrlMode = "sctr"; // "sctr" | "ctr"
+
+function setCtrlMode(mode) {
+  ctrlMode = mode;
+  // Update toggle button styles
+  document.getElementById("btn-mode-sctr").classList.toggle("active", mode === "sctr");
+  document.getElementById("btn-mode-ctr").classList.toggle("active", mode === "ctr");
+  // Show/hide the dt column header
+  document.querySelectorAll(".col-dt").forEach(el => {
+    el.style.display = mode === "ctr" ? "" : "none";
+  });
+  // Rebuild existing rows to show/hide dt cell
+  const tbody = document.getElementById("ctrl-tbody");
+  const trs = [...tbody.querySelectorAll("tr")];
+  trs.forEach(tr => {
+    const dtCell = tr.querySelector(".cell-dt");
+    if (dtCell) dtCell.style.display = mode === "ctr" ? "" : "none";
+  });
+}
+
+document.getElementById("btn-mode-sctr").addEventListener("click", () => setCtrlMode("sctr"));
+document.getElementById("btn-mode-ctr").addEventListener("click",  () => setCtrlMode("ctr"));
+
+function addCtrlRow(tbody, type=1, tStart=0, tEnd=0, dt=1, val=0) {
   const tr = document.createElement("tr");
   const opts = EVENT_TYPES.map(e =>
     `<option value="${e.value}"${e.value==type?" selected":""}>${e.label}</option>`).join("");
+  const dtDisplay = ctrlMode === "ctr" ? "" : "display:none";
   tr.innerHTML = `
     <td><select class="ctrl-row-type">${opts}</select></td>
-    <td><input class="ctrl-row-num" type="text" value="${tStart}"></td>
-    <td><input class="ctrl-row-num" type="text" value="${tEnd}"></td>
-    <td><input class="ctrl-row-num" type="text" value="${val}"></td>
+    <td><input class="ctrl-row-num" type="text" value="${tStart}" placeholder="start"></td>
+    <td><input class="ctrl-row-num" type="text" value="${tEnd}" placeholder="end"></td>
+    <td class="cell-dt col-dt" style="${dtDisplay}"><input class="ctrl-row-num" type="text" value="${dt}" placeholder="dt"></td>
+    <td><input class="ctrl-row-num" type="text" value="${val}" placeholder="value"></td>
     <td><button class="btn-icon" onclick="this.closest('tr').remove()">✕</button></td>`;
   tbody.appendChild(tr);
 }
 
 function initCtrlTable(rows) {
+  // rows: [type, start, end, (dt), val] — dt optional (index 3 if 5-col, val at [3] if 4-col)
   const tbody = document.getElementById("ctrl-tbody");
   tbody.innerHTML = "";
-  rows.forEach(r => addCtrlRow(tbody, r[0], r[1], r[2], r[3]));
+  rows.forEach(r => {
+    if (r.length >= 5) addCtrlRow(tbody, r[0], r[1], r[2], r[3], r[4]);
+    else               addCtrlRow(tbody, r[0], r[1], r[2], 1,    r[3]);
+  });
 }
 
 document.getElementById("btn-add-row").addEventListener("click", () => {
-  const rows = document.getElementById("ctrl-tbody").querySelectorAll("tr");
+  const trs = document.getElementById("ctrl-tbody").querySelectorAll("tr");
   let lastEnd = 0;
-  if (rows.length) {
-    const last = rows[rows.length-1].querySelectorAll("input");
-    lastEnd = parseFloat(last[1].value) || 0;
+  if (trs.length) {
+    const inps = trs[trs.length-1].querySelectorAll("input");
+    lastEnd = parseFloat(inps[1].value) || 0;
   }
-  addCtrlRow(document.getElementById("ctrl-tbody"), 1, lastEnd, lastEnd, 0);
+  addCtrlRow(document.getElementById("ctrl-tbody"), 1, lastEnd, lastEnd, 1, 0);
 });
 
-function assembleSctr() {
+document.getElementById("btn-clear-ctrl").addEventListener("click", () => {
+  if (confirm("Clear all loading sequence rows?"))
+    document.getElementById("ctrl-tbody").innerHTML = "";
+});
+
+// Assemble control file text in the active format
+function assembleCtrl() {
   let lines = "";
   document.getElementById("ctrl-tbody").querySelectorAll("tr").forEach(tr => {
-    const sel = tr.querySelector("select").value;
-    const inp = tr.querySelectorAll("input");
-    lines += `${sel}\t${inp[0].value}\t${inp[1].value}\t${inp[2].value}\n`;
+    const sel  = tr.querySelector("select").value;
+    const inps = tr.querySelectorAll("input");
+    if (ctrlMode === "ctr") {
+      // 5-col: type  startTime  endTime  dt  value
+      lines += `${sel}\t${inps[0].value}\t${inps[1].value}\t${inps[2].value}\t${inps[3].value}\n`;
+    } else {
+      // 4-col: type  startTime  endTime  value
+      lines += `${sel}\t${inps[0].value}\t${inps[1].value}\t${inps[2].value}\n`;
+    }
   });
   return lines + "0\n";
 }
 
-function loadSctrText(text) {
+function loadCtrlText(text) {
   const rows = [];
   text.trim().split("\n").forEach(line => {
     const p = line.trim().split(/\s+/);
     const t = parseInt(p[0]);
     if (isNaN(t) || t === 0) return;
-    rows.push([t, parseFloat(p[1]||0), parseFloat(p[2]||0), parseFloat(p[3]||0)]);
+    if (p.length >= 5) {
+      // 5-col .ctr
+      rows.push([t, parseFloat(p[1]||0), parseFloat(p[2]||0), parseFloat(p[3]||1), parseFloat(p[4]||0)]);
+      if (ctrlMode !== "ctr") setCtrlMode("ctr"); // auto-switch mode
+    } else {
+      // 4-col .sctr
+      rows.push([t, parseFloat(p[1]||0), parseFloat(p[2]||0), parseFloat(p[3]||0)]);
+      if (ctrlMode !== "sctr") setCtrlMode("sctr");
+    }
   });
   if (rows.length) initCtrlTable(rows);
 }
@@ -269,7 +319,7 @@ document.getElementById("upload-prm").addEventListener("change", e => {
 });
 document.getElementById("upload-sctr").addEventListener("change", e => {
   const f = e.target.files[0]; if (!f) return;
-  const r = new FileReader(); r.onload = ev => loadSctrText(ev.target.result); r.readAsText(f);
+  const r = new FileReader(); r.onload = ev => loadCtrlText(ev.target.result); r.readAsText(f);
   e.target.value = "";
 });
 
@@ -302,7 +352,7 @@ function downloadText(content, filename) {
 document.getElementById("btn-export-prm").addEventListener("click",
   () => downloadText(assemblePrm(), getProjectName() + ".prm"));
 document.getElementById("btn-export-sctr").addEventListener("click",
-  () => downloadText(assembleSctr(), getProjectName() + ".sctr"));
+  () => downloadText(assembleCtrl(), getProjectName() + ".sctr"));
 
 // ── Status & progress bar ─────────────────────────────────────────────────────
 function setStatus(msg, type="") {
@@ -375,7 +425,7 @@ document.getElementById("btn-run").addEventListener("click", () => {
   simWorker.postMessage({
     type: "run",
     paramContent: assemblePrm(),
-    ctrlContent:  assembleSctr(),
+    ctrlContent:  assembleCtrl(),
   });
 });
 

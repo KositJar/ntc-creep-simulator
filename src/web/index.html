@@ -107,13 +107,23 @@
         </div>
       </div>
       <div class="panel-body">
+        <!-- Format toggle -->
+        <div class="ctrl-mode-row">
+          <span class="ctrl-mode-label">Format:</span>
+          <div class="ctrl-mode-toggle">
+            <button class="ctrl-mode-btn active" id="btn-mode-sctr">Simplified (.sctr) — 4 col</button>
+            <button class="ctrl-mode-btn" id="btn-mode-ctr">Classic (.ctr) — 5 col</button>
+          </div>
+        </div>
+
         <div class="ctrl-table-wrap">
-          <table class="ctrl-table">
-            <thead>
+          <table class="ctrl-table" id="ctrl-table">
+            <thead id="ctrl-thead">
               <tr>
                 <th>Event Type</th>
                 <th>Start Time (s)</th>
                 <th>End Time (s)</th>
+                <th class="col-dt" style="display:none">dt (s)</th>
                 <th>Control Value</th>
                 <th></th>
               </tr>
@@ -123,6 +133,7 @@
         </div>
         <div class="ctrl-btn-row">
           <button class="btn-secondary btn-sm" id="btn-add-row">+ Add Row</button>
+          <button class="btn-secondary btn-sm" id="btn-clear-ctrl" style="color:var(--error)">✕ Clear</button>
         </div>
         <div class="ctrl-legend">
           <strong>Event types:</strong><br>

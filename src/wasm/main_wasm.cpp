@@ -135,22 +135,50 @@ int initSimulation(std::string paramContent, std::string ctrlContent) {
     cleanupState();
     gState = new SimState();
 
-    // Write inputs to Emscripten MEMFS
+    // Write param to MEMFS (ctrl file written later after format detection)
     { std::ofstream pf("/tmp/param.prm"); if (!pf) { gState->hasError=true; gState->errorMsg="ERROR: MEMFS param"; return -1; } pf << paramContent; }
-    { std::ofstream cf("/tmp/ctrl.sctr"); if (!cf) { gState->hasError=true; gState->errorMsg="ERROR: MEMFS ctrl";  return -1; } cf << ctrlContent; }
 
     // Open persistent output files
     gState->logFile = new ofstream("/tmp/output.log");
     gState->datFile = new ofstream("/tmp/output.dat");
     if (!*gState->datFile) { gState->hasError=true; gState->errorMsg="ERROR: Cannot open output file"; return -1; }
 
-    // Load and expand control sequence
+    // Auto-detect control format: count tokens on the first data line
+    // 4 tokens → simplified .sctr format; 5 tokens → legacy .ctr format
+    bool useSctr = true;
     {
-        std::ifstream sctrFile("/tmp/ctrl.sctr");
+        std::istringstream ss(ctrlContent);
+        std::string line;
+        while (std::getline(ss, line)) {
+            std::istringstream ls(line);
+            std::string tok;
+            int count = 0;
+            while (ls >> tok) count++;
+            if (count >= 4) { useSctr = (count == 4); break; }
+        }
+    }
+
+    // Write to the appropriately-named virtual file so the extension-based
+    // logic in GenerateCtrl.h / Load_Control works correctly
+    const char* ctrlPath = useSctr ? "/tmp/ctrl.sctr" : "/tmp/ctrl.ctr";
+    { std::ofstream cf(ctrlPath); if (!cf) { gState->hasError=true; gState->errorMsg="ERROR: MEMFS ctrl"; return -1; } cf << ctrlContent; }
+
+    // Load and expand control sequence
+    if (useSctr) {
+        std::ifstream sctrFile(ctrlPath);
         auto simpleEvents = readSimplifiedControl(sctrFile);
         if (simpleEvents.empty()) { gState->hasError=true; gState->errorMsg="ERROR: No control events found"; return -1; }
         gState->controlQueue = expandSimpleControl(simpleEvents);
         if (gState->controlQueue.empty()) { gState->hasError=true; gState->errorMsg="ERROR: Empty control queue"; return -1; }
+    } else {
+        std::ifstream ctrFile(ctrlPath);
+        if (!ctrFile) { gState->hasError=true; gState->errorMsg="ERROR: Cannot open .ctr file"; return -1; }
+        Control c;
+        do {
+            c.Load_Control(ctrFile);
+            gState->controlQueue.push_back(c);
+        } while (c.TypeofEvent != End);
+        if (gState->controlQueue.size() <= 1) { gState->hasError=true; gState->errorMsg="ERROR: Empty .ctr file"; return -1; }
     }
 
     // Determine total simulation time for progress calculation

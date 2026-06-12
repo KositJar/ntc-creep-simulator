@@ -105,6 +105,15 @@ body {
 .field input[type="text"] { padding:4px 7px; border:1px solid var(--border); border-radius:4px; background:var(--bg-secondary); color:var(--text); font-size:0.8rem; font-family:monospace; outline:none; }
 .field input:focus { border-color:var(--accent); }
 
+/* ── Control mode toggle ───────────────────────── */
+.ctrl-mode-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.ctrl-mode-label { font-size:0.75rem; color:var(--text-muted); font-weight:500; white-space:nowrap; }
+.ctrl-mode-toggle { display:flex; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.ctrl-mode-btn { background:var(--bg-secondary); color:var(--text-muted); border:none; padding:5px 12px; font-size:0.75rem; cursor:pointer; transition:background 0.15s, color 0.15s; font-family:inherit; }
+.ctrl-mode-btn:first-child { border-right:1px solid var(--border); }
+.ctrl-mode-btn.active { background:var(--accent); color:#fff; }
+.ctrl-mode-btn:not(.active):hover { background:var(--accent-light); color:var(--accent); }
+
 /* ── Control table ─────────────────────────────── */
 .ctrl-table-wrap { overflow-x:auto; margin-bottom:8px; }
 table.ctrl-table { width:100%; border-collapse:collapse; font-size:0.8rem; }
