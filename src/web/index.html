@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NTC Creep Simulator v1.2</title>
+  <title>NTC Creep Simulator v1.3</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
 </head>
@@ -12,7 +12,7 @@
 <!-- ── Password Gate ─────────────────────────────────────────────────────── -->
 <div id="gate">
   <div class="gate-box">
-    <h2>NTC Creep Simulator v1.2</h2>
+    <h2>NTC Creep Simulator v1.3</h2>
     <p>Lab access only — enter the password to continue.</p>
     <input type="password" id="pw-input" placeholder="Password" autofocus>
     <button class="btn-primary" id="pw-btn" style="width:100%">Enter</button>
@@ -24,7 +24,7 @@
 
   <!-- ── Navigation bar ──────────────────────────────────────────────────── -->
   <nav class="navbar">
-    <div class="nav-brand">NTC Creep Simulator <span class="nav-version">v1.2</span></div>
+    <div class="nav-brand">NTC Creep Simulator <span class="nav-version">v1.3</span></div>
     <div class="nav-links">
       <button class="nav-btn" onclick="openModal('modal-howto')">How to Use</button>
       <button class="nav-btn" onclick="openModal('modal-faq')">FAQ</button>
@@ -245,7 +245,16 @@
   <div class="modal-box">
     <div class="modal-header"><span>Changelog</span><button onclick="closeModal('modal-changelog')">✕</button></div>
     <div class="modal-body">
-      <h3>v1.2 — 2026</h3>
+      <h3>v1.3 — 2026-06-12</h3>
+      <ul>
+        <li>Control file format toggle: Simplified (.sctr, 4-col) / Classic (.ctr, 5-col with dt)</li>
+        <li>Clear button for loading sequence table</li>
+        <li>Project Name field in run area — all exports (.dat/.prm/.sctr) share the same base name</li>
+        <li>Timestamp auto-filled as default project name; refreshes after each run</li>
+        <li>Worker fallback: gracefully handles old cached WASM (runSimulation)</li>
+        <li>Version number now updated with every release</li>
+      </ul>
+      <h3>v1.2 — 2026-06-12</h3>
       <ul>
         <li>Real percentage progress bar via Web Worker chunked execution</li>
         <li>Dual-line chart: Sigma (solid) + Sigma_f (dashed), offset +1 for correct R display</li>
@@ -281,7 +290,7 @@
   <div class="modal-box">
     <div class="modal-header"><span>About</span><button onclick="closeModal('modal-about')">✕</button></div>
     <div class="modal-body">
-      <h3>NTC Creep Simulator v1.2</h3>
+      <h3>NTC Creep Simulator v1.3</h3>
       <p>Developed by <strong>Kosit Jariyatatsakorn</strong></p>
       <p>A browser-based interface for the Nonlinear Three-Component (NTC) constitutive model for geomaterials. The C++ model is compiled to WebAssembly via Emscripten and runs entirely in the browser.</p>
       <h3>References</h3>
