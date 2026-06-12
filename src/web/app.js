@@ -1,4 +1,4 @@
-// app.js — NTC Creep Simulator v1.3
+// app.js — NTC Creep Simulator v1.4
 
 // ── Password gate ─────────────────────────────────────────────────────────────
 const PASSWORD_HASH = "061406b92feb02f5f0843b64f75e214a29e98341d8309718a7f7e68420e65ea1"; // geotech13
@@ -270,8 +270,8 @@ function assembleCtrl() {
       // 5-col: type  startTime  endTime  dt  value
       lines += `${sel}\t${inps[0].value}\t${inps[1].value}\t${inps[2].value}\t${inps[3].value}\n`;
     } else {
-      // 4-col: type  startTime  endTime  value
-      lines += `${sel}\t${inps[0].value}\t${inps[1].value}\t${inps[2].value}\n`;
+      // 4-col: type  startTime  endTime  value  (inps[2] is hidden dt, skip it)
+      lines += `${sel}\t${inps[0].value}\t${inps[1].value}\t${inps[3].value}\n`;
     }
   });
   return lines + "0\n";

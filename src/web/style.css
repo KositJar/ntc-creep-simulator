@@ -1,4 +1,4 @@
-/* NTC Creep Simulator v1.3 — CSS (dark default) */
+/* NTC Creep Simulator v1.4 — CSS (dark default) */
 
 :root {
   /* dark theme values are the default */
@@ -90,7 +90,7 @@ body {
 .file-label:hover { background:var(--accent-light); border-color:var(--accent); }
 
 /* ── Collapsible sections ──────────────────────── */
-.section-toggle { width:100%; display:flex; align-items:center; justify-content:space-between; padding:7px 10px; background:var(--bg-secondary); border:1px solid var(--border-light); border-radius:var(--radius); cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--text); margin-bottom:3px; text-align:left; transition:background 0.15s; }
+.section-toggle { width:100%; display:flex; align-items:center; justify-content:space-between; padding:7px 10px 7px 9px; background:var(--bg-secondary); border:1px solid var(--border-light); border-left:3px solid var(--sec-color, var(--border)); border-radius:var(--radius); cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--sec-color, var(--text)); margin-bottom:3px; text-align:left; transition:background 0.15s; }
 .section-toggle:hover { background:var(--accent-light); }
 .section-toggle .arrow { transition:transform 0.2s; font-size:0.65rem; color:var(--text-muted); }
 .section-toggle.open .arrow { transform:rotate(90deg); }

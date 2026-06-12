@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NTC Creep Simulator v1.3</title>
+  <title>NTC Creep Simulator v1.4</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
 </head>
@@ -12,7 +12,7 @@
 <!-- ── Password Gate ─────────────────────────────────────────────────────── -->
 <div id="gate">
   <div class="gate-box">
-    <h2>NTC Creep Simulator v1.3</h2>
+    <h2>NTC Creep Simulator v1.4</h2>
     <p>Lab access only — enter the password to continue.</p>
     <input type="password" id="pw-input" placeholder="Password" autofocus>
     <button class="btn-primary" id="pw-btn" style="width:100%">Enter</button>
@@ -24,7 +24,7 @@
 
   <!-- ── Navigation bar ──────────────────────────────────────────────────── -->
   <nav class="navbar">
-    <div class="nav-brand">NTC Creep Simulator <span class="nav-version">v1.3</span></div>
+    <div class="nav-brand">NTC Creep Simulator <span class="nav-version">v1.4</span></div>
     <div class="nav-links">
       <button class="nav-btn" onclick="openModal('modal-howto')">How to Use</button>
       <button class="nav-btn" onclick="openModal('modal-faq')">FAQ</button>
@@ -53,40 +53,40 @@
       </div>
       <div class="panel-body">
 
-        <button class="section-toggle open" type="button">Initialization<span class="arrow">▶</span></button>
+        <button class="section-toggle open" type="button" style="--sec-color:#60a5fa">Initialization<span class="arrow">▶</span></button>
         <div class="section-body open" id="sec-init-body"></div>
 
-        <button class="section-toggle open" type="button">Hypo-Elastic<span class="arrow">▶</span></button>
+        <button class="section-toggle open" type="button" style="--sec-color:#22d3ee">Hypo-Elastic<span class="arrow">▶</span></button>
         <div class="section-body open" id="sec-elastic-body"></div>
 
-        <button class="section-toggle open" type="button">Viscosity Function<span class="arrow">▶</span></button>
+        <button class="section-toggle open" type="button" style="--sec-color:#a78bfa">Viscosity Function<span class="arrow">▶</span></button>
         <div class="section-body open" id="sec-viscous-body"></div>
 
-        <button class="section-toggle" type="button">Decay Function<span class="arrow">▶</span></button>
+        <button class="section-toggle" type="button" style="--sec-color:#fbbf24">Decay Function<span class="arrow">▶</span></button>
         <div class="section-body" id="sec-decay-body"></div>
 
-        <button class="section-toggle" type="button">Reference Curve<span class="arrow">▶</span></button>
+        <button class="section-toggle" type="button" style="--sec-color:#34d399">Reference Curve<span class="arrow">▶</span></button>
         <div class="section-body" id="sec-ref-body"></div>
 
-        <button class="section-toggle" type="button">Theta<span class="arrow">▶</span></button>
+        <button class="section-toggle" type="button" style="--sec-color:#f472b6">Theta<span class="arrow">▶</span></button>
         <div class="section-body" id="sec-theta-body"></div>
 
-        <button class="section-toggle" type="button">Ageing<span class="arrow">▶</span></button>
+        <button class="section-toggle" type="button" style="--sec-color:#fb923c">Ageing<span class="arrow">▶</span></button>
         <div class="section-body" id="sec-aging-body"></div>
 
-        <button class="section-toggle" type="button">Initial Viscous History<span class="arrow">▶</span></button>
+        <button class="section-toggle" type="button" style="--sec-color:#2dd4bf">Initial Viscous History<span class="arrow">▶</span></button>
         <div class="section-body" id="sec-history-body"></div>
 
-        <button class="section-toggle" type="button">Direction<span class="arrow">▶</span></button>
+        <button class="section-toggle" type="button" style="--sec-color:#818cf8">Direction<span class="arrow">▶</span></button>
         <div class="section-body" id="sec-direction-body"></div>
 
-        <button class="section-toggle" type="button">Proportion<span class="arrow">▶</span></button>
+        <button class="section-toggle" type="button" style="--sec-color:#a3e635">Proportion<span class="arrow">▶</span></button>
         <div class="section-body" id="sec-proportion-body"></div>
 
-        <button class="section-toggle" type="button">Lambda_V<span class="arrow">▶</span></button>
+        <button class="section-toggle" type="button" style="--sec-color:#38bdf8">Lambda_V<span class="arrow">▶</span></button>
         <div class="section-body" id="sec-lambda-body"></div>
 
-        <button class="section-toggle" type="button">Iteration<span class="arrow">▶</span></button>
+        <button class="section-toggle" type="button" style="--sec-color:#fb7185">Iteration<span class="arrow">▶</span></button>
         <div class="section-body" id="sec-solver-body"></div>
 
       </div>
@@ -245,6 +245,11 @@
   <div class="modal-box">
     <div class="modal-header"><span>Changelog</span><button onclick="closeModal('modal-changelog')">✕</button></div>
     <div class="modal-body">
+      <h3>v1.4 — 2026-06-12</h3>
+      <ul>
+        <li>Bug fix: .sctr format was assembling control file with dt (hidden column) instead of control value — all .sctr simulations were running with wrong CTR values</li>
+        <li>Parameter section headings now have distinct colors for easy visual identification</li>
+      </ul>
       <h3>v1.3 — 2026-06-12</h3>
       <ul>
         <li>Control file format toggle: Simplified (.sctr, 4-col) / Classic (.ctr, 5-col with dt)</li>
@@ -290,7 +295,7 @@
   <div class="modal-box">
     <div class="modal-header"><span>About</span><button onclick="closeModal('modal-about')">✕</button></div>
     <div class="modal-body">
-      <h3>NTC Creep Simulator v1.3</h3>
+      <h3>NTC Creep Simulator v1.4</h3>
       <p>Developed by <strong>Kosit Jariyatatsakorn</strong></p>
       <p>A browser-based interface for the Nonlinear Three-Component (NTC) constitutive model for geomaterials. The C++ model is compiled to WebAssembly via Emscripten and runs entirely in the browser.</p>
       <h3>References</h3>
