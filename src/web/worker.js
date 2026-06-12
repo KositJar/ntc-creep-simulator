@@ -26,38 +26,47 @@ function startSimulation(paramContent, ctrlContent) {
 
     postMessage({ type: 'progress', value: 0 });
 
+    // If the step-by-step API is available, use it for real progress %.
+    // Otherwise fall back to the one-shot API (old cached WASM).
+    if (typeof ntcModule.initSimulation === 'function') {
+        runChunked(paramContent, ctrlContent);
+    } else {
+        runOneShot(paramContent, ctrlContent);
+    }
+}
+
+function runChunked(paramContent, ctrlContent) {
     const total = ntcModule.initSimulation(paramContent, ctrlContent);
     if (total < 0) {
         postMessage({ type: 'error', msg: ntcModule.getError() || 'Initialization failed' });
         return;
     }
 
-    // Run in chunks — setTimeout(0) yields between chunks so postMessage
-    // is delivered and the main thread can update the progress bar.
     function runChunk() {
-        if (ntcModule.isSimulationDone()) {
-            finalize();
-            return;
-        }
+        if (ntcModule.isSimulationDone()) { finalize(); return; }
 
         const pct = ntcModule.runNSteps(150);
-
-        if (pct === -2) {
-            const err = ntcModule.getError() || 'Solver error';
-            postMessage({ type: 'error', msg: err });
-            return;
-        }
+        if (pct === -2) { postMessage({ type: 'error', msg: ntcModule.getError() || 'Solver error' }); return; }
 
         postMessage({ type: 'progress', value: Math.min(pct, 99) });
 
-        if (ntcModule.isSimulationDone()) {
-            finalize();
-        } else {
-            setTimeout(runChunk, 0);
-        }
+        if (ntcModule.isSimulationDone()) finalize();
+        else setTimeout(runChunk, 0);
     }
-
     setTimeout(runChunk, 0);
+}
+
+function runOneShot(paramContent, ctrlContent) {
+    // Fallback for old cached WASM that only has runSimulation()
+    postMessage({ type: 'progress', value: 10 });
+    try {
+        const result = ntcModule.runSimulation(paramContent, ctrlContent);
+        postMessage({ type: 'progress', value: 100 });
+        if (result.startsWith('ERROR:')) postMessage({ type: 'error', msg: result });
+        else postMessage({ type: 'result', data: result });
+    } catch (e) {
+        postMessage({ type: 'error', msg: 'Runtime error: ' + e.message });
+    }
 }
 
 function finalize() {
