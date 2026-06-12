@@ -4,7 +4,7 @@
 // SHA-256 hash of the lab password. Change this to update the password.
 // To generate: run  sha256("yourpassword")  in browser console after page loads.
 // Default password: ntclab2024
-const PASSWORD_HASH = "8e3962491e9c15702bedcf4f25d796e51608f2f45cf9e8252147f215133a79ad";
+const PASSWORD_HASH = "061406b92feb02f5f0843b64f75e214a29e98341d8309718a7f7e68420e65ea1";
 
 async function sha256(msg) {
   const buf = await crypto.subtle.digest("SHA-256",
