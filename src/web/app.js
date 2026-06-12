@@ -1,4 +1,4 @@
-// app.js — NTC Creep Simulator v1.5
+// app.js — NTC Creep Simulator v1.6
 
 // ── Password gate ─────────────────────────────────────────────────────────────
 const PASSWORD_HASH = "061406b92feb02f5f0843b64f75e214a29e98341d8309718a7f7e68420e65ea1"; // geotech13
@@ -168,6 +168,70 @@ function buildParamEditor() {
   });
 }
 buildParamEditor();
+buildAfWidget();
+
+// ── A_f temperature widget (Equation 7) ──────────────────────────────────────
+// Appended into sec-aging-body after the normal param grid.
+function buildAfWidget() {
+  const body = document.getElementById("sec-aging-body");
+  if (!body) return;
+  const div = document.createElement("div");
+  div.className = "af-widget";
+  div.innerHTML =
+    '<div class="af-mode-row">' +
+    '  <span class="af-mode-label">A<sup>f</sup> input method:</span>' +
+    '  <label class="af-radio-opt"><input type="radio" name="af-mode" value="direct" checked> Direct value</label>' +
+    '  <label class="af-radio-opt"><input type="radio" name="af-mode" value="temp"> Compute from Temperature</label>' +
+    '</div>' +
+    '<div id="af-temp-panel" class="af-temp-panel" style="display:none">' +
+    '  <div class="af-eq-box">' +
+    '    A<sup>f</sup> = 1 &minus; a &sdot; [ (T &minus; T<sub>0</sub>) / T<sub>0</sub> ]<sup>b</sup>' +
+    '    <span class="af-eq-cond">&nbsp; ; &nbsp; T &ge; T<sub>0</sub></span>' +
+    '  </div>' +
+    '  <div class="af-hint">' +
+    '    Eq.&nbsp;(7) &mdash; a, b: material constants &nbsp;&middot;&nbsp; T<sub>0</sub>: reference temperature (e.g.&nbsp;30&thinsp;&deg;C)<br>' +
+    '    a &gt; 0: A<sup>f</sup> decreases with T &nbsp;|&nbsp; a &lt; 0: A<sup>f</sup> increases with T' +
+    '  </div>' +
+    '  <div class="param-grid" style="margin-top:6px">' +
+    '    <div class="field"><label>T (&deg;C)</label><input type="text" id="af-T" value="30" autocomplete="off"></div>' +
+    '    <div class="field"><label>T<sub>0</sub> (&deg;C)</label><input type="text" id="af-T0" value="30" autocomplete="off"></div>' +
+    '    <div class="field"><label>a</label><input type="text" id="af-a" value="0" autocomplete="off"></div>' +
+    '    <div class="field"><label>b</label><input type="text" id="af-b" value="1" autocomplete="off"></div>' +
+    '  </div>' +
+    '  <div class="af-result-row">' +
+    '    &rarr; Computed A<sup>f</sup> = <span class="af-result-val" id="af-computed">1.0000</span>' +
+    '    <span class="af-result-note">(auto-fills the A_f field above)</span>' +
+    '  </div>' +
+    '</div>';
+  body.appendChild(div);
+
+  div.querySelectorAll("input[name='af-mode']").forEach(r => {
+    r.addEventListener("change", e => {
+      const isTemp = e.target.value === "temp";
+      document.getElementById("af-temp-panel").style.display = isTemp ? "block" : "none";
+      if (isTemp) computeAf();
+    });
+  });
+  ["af-T","af-T0","af-a","af-b"].forEach(id =>
+    document.getElementById(id).addEventListener("input", computeAf));
+}
+
+function computeAf() {
+  const T   = parseFloat(document.getElementById("af-T")?.value);
+  const T0  = parseFloat(document.getElementById("af-T0")?.value);
+  const a   = parseFloat(document.getElementById("af-a")?.value);
+  const b   = parseFloat(document.getElementById("af-b")?.value);
+  const span  = document.getElementById("af-computed");
+  const afInp = document.getElementById("p-A_f");
+  if (!span) return;
+  if ([T, T0, a, b].some(isNaN) || T0 === 0) { span.textContent = "—"; return; }
+  if (T < T0) { span.textContent = "T < T₀ (invalid)"; return; }
+  const ratio = (T - T0) / T0;
+  const af = (ratio === 0) ? 1 : 1 - a * Math.pow(ratio, b);
+  if (!isFinite(af)) { span.textContent = "—"; return; }
+  span.textContent = af.toFixed(4);
+  if (afInp) afInp.value = af.toFixed(6);
+}
 
 // ── Assemble .prm text (serialization order = PARAMS array order) ─────────────
 function assemblePrm() {

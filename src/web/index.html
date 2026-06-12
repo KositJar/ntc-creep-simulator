@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NTC Creep Simulator v1.5</title>
+  <title>NTC Creep Simulator v1.6</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
 </head>
@@ -12,7 +12,7 @@
 <!-- ── Password Gate ─────────────────────────────────────────────────────── -->
 <div id="gate">
   <div class="gate-box">
-    <h2>NTC Creep Simulator v1.5</h2>
+    <h2>NTC Creep Simulator v1.6</h2>
     <p>Lab access only — enter the password to continue.</p>
     <input type="password" id="pw-input" placeholder="Password" autofocus>
     <button class="btn-primary" id="pw-btn" style="width:100%">Enter</button>
@@ -24,7 +24,7 @@
 
   <!-- ── Navigation bar ──────────────────────────────────────────────────── -->
   <nav class="navbar">
-    <div class="nav-brand">NTC Creep Simulator <span class="nav-version">v1.5</span></div>
+    <div class="nav-brand">NTC Creep Simulator <span class="nav-version">v1.6</span></div>
     <div class="nav-links">
       <button class="nav-btn" onclick="openModal('modal-howto')">How to Use</button>
       <button class="nav-btn" onclick="openModal('modal-faq')">FAQ</button>
@@ -245,10 +245,20 @@
   <div class="modal-box">
     <div class="modal-header"><span>What's New</span><button onclick="closeModal('modal-changelog')">✕</button></div>
     <div class="modal-body">
-      <h3>v1.5 — 2026-06-12</h3>
+      <h3>v1.6 — 2026-06-12</h3>
       <ul>
         <li>Bug fix: navbar text invisible in light theme (was using body text color against always-dark nav background)</li>
         <li>Renamed "Changelog" menu item to "What's New"</li>
+      </ul>
+      <h3>v1.6 — 2026-06-12</h3>
+      <ul>
+        <li>A_f (Ageing section): added checkbox to choose between direct input or computing from temperature using Eq.&nbsp;(7): A<sup>f</sup> = 1 − a·[(T − T₀)/T₀]<sup>b</sup></li>
+        <li>When "Compute from Temperature" is selected, entering T, T₀, a, b auto-fills A_f in real time</li>
+      </ul>
+      <h3>v1.5 — 2026-06-12</h3>
+      <ul>
+        <li>Bug fix: navbar text invisible when switching to light theme</li>
+        <li>Renamed "Changelog" to "What's New"</li>
       </ul>
       <h3>v1.4 — 2026-06-12</h3>
       <ul>
@@ -300,7 +310,7 @@
   <div class="modal-box">
     <div class="modal-header"><span>About</span><button onclick="closeModal('modal-about')">✕</button></div>
     <div class="modal-body">
-      <h3>NTC Creep Simulator v1.5</h3>
+      <h3>NTC Creep Simulator v1.6</h3>
       <p>Developed by <strong>Kosit Jariyatatsakorn</strong></p>
       <p>A browser-based interface for the Nonlinear Three-Component (NTC) constitutive model for geomaterials. The C++ model is compiled to WebAssembly via Emscripten and runs entirely in the browser.</p>
       <h3>References</h3>
