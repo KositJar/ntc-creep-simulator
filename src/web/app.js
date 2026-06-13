@@ -1,4 +1,4 @@
-// app.js — NTC Creep Simulator v1.7
+// app.js — NTC Creep Simulator v1.7.2
 
 // ── Password gate ─────────────────────────────────────────────────────────────
 const PASSWORD_HASH = "061406b92feb02f5f0843b64f75e214a29e98341d8309718a7f7e68420e65ea1"; // geotech13
@@ -87,7 +87,12 @@ const PARAMS = [
   { id:"m2",         label:"1+b",                dispSec:"viscous",    default:0.55 },
   { id:"epd_ir_2",   label:"epd_ir_0 (2nd)",     dispSec:"viscous",    default:0.00012 },
   { id:"epd_ir_int", label:"epd_ir_int",         dispSec:"viscous",    default:1.99245e-7 },
-  { id:"gvtype",     label:"Type  0:gv1 1:gv2 2:mix", dispSec:"viscous", default:2 },
+  { id:"gvtype", label:"Viscosity type", dispSec:"viscous", default:2,
+    type:"select", options:[
+      {v:0, l:"0 — gv1 only"},
+      {v:1, l:"1 — gv2 only"},
+      {v:2, l:"2 — mix (gv1+gv2)"},
+    ]},
   // 24–25: Direction
   { id:"DirectionX", label:"Dx",                 dispSec:"direction",  default:1 },
   { id:"DirectionY", label:"Dy",                 dispSec:"direction",  default:1 },
@@ -115,7 +120,14 @@ const PARAMS = [
   { id:"RefP8",  label:"8",  dispSec:"ref", default:0 },
   { id:"RefP9",  label:"9",  dispSec:"ref", default:0 },
   // 44: Reference function type
-  { id:"RefFunc", label:"Type  0:Poly 1:Exp 2:EPS 3–4:DST", dispSec:"ref", default:2 },
+  { id:"RefFunc", label:"Reference curve type", dispSec:"ref", default:2,
+    type:"select", options:[
+      {v:0, l:"0 — Polynomial"},
+      {v:1, l:"1 — Exponential"},
+      {v:2, l:"2 — EPS"},
+      {v:3, l:"3 — DST (type 3)"},
+      {v:4, l:"4 — DST (type 4)"},
+    ]},
   // 45–48: Theta
   { id:"th1",       label:"theta1",  dispSec:"theta", default:-1.42 },
   { id:"th2",       label:"theta2",  dispSec:"theta", default:-0.75 },
@@ -129,7 +141,7 @@ const PARAMS = [
   { id:"r2_f",      label:"r2_f",      dispSec:"aging", default:1 },
   { id:"ep_ir_0_f", label:"ep_ir_0_f", dispSec:"aging", default:0 },
   { id:"c_f",       label:"c_f",       dispSec:"aging", default:1 },
-  { id:"A_f",       label:"A_f",       dispSec:"aging", default:0.957 },
+  { id:"A_f",       label:"A_f",       dispSec:"aging", default:0.957, widget:"af" },
 ];
 
 // ── Build parameter form ──────────────────────────────────────────────────────
@@ -151,6 +163,7 @@ const SECTION_BODIES = {
 function buildParamEditor() {
   const grids = {};
   PARAMS.forEach(p => {
+    if (p.widget) return; // handled by dedicated widget
     const bodyId = SECTION_BODIES[p.dispSec];
     if (!bodyId) return;
     if (!grids[p.dispSec]) {
@@ -162,8 +175,16 @@ function buildParamEditor() {
     }
     const div = document.createElement("div");
     div.className = "field";
-    div.innerHTML = `<label for="p-${p.id}">${p.label}</label>
-      <input type="text" id="p-${p.id}" value="${p.default}" autocomplete="off">`;
+    if (p.type === "select") {
+      const opts = p.options.map(o =>
+        `<option value="${o.v}"${o.v == p.default ? " selected" : ""}>${o.l}</option>`
+      ).join("");
+      div.innerHTML = `<label for="p-${p.id}">${p.label}</label>
+        <select id="p-${p.id}">${opts}</select>`;
+    } else {
+      div.innerHTML = `<label for="p-${p.id}">${p.label}</label>
+        <input type="text" id="p-${p.id}" value="${p.default}" autocomplete="off">`;
+    }
     grids[p.dispSec].appendChild(div);
   });
 }
@@ -172,6 +193,7 @@ buildAfWidget();
 
 // ── A_f temperature widget (Equation 7) ──────────────────────────────────────
 // Appended into sec-aging-body after the normal param grid.
+// A_f field lives here (not in the main grid); toggle controls its editability.
 function buildAfWidget() {
   const body = document.getElementById("sec-aging-body");
   if (!body) return;
@@ -179,9 +201,11 @@ function buildAfWidget() {
   div.className = "af-widget";
   div.innerHTML =
     '<div class="af-mode-row">' +
-    '  <span class="af-mode-label">A<sup>f</sup> input method:</span>' +
-    '  <label class="af-radio-opt"><input type="radio" name="af-mode" value="direct" checked> Direct value</label>' +
-    '  <label class="af-radio-opt"><input type="radio" name="af-mode" value="temp"> Compute from Temperature</label>' +
+    '  <span class="af-mode-label">A<sup>f</sup> method:</span>' +
+    '  <div class="ctrl-mode-toggle">' +
+    '    <button class="ctrl-mode-btn active" id="btn-af-direct">Direct value</button>' +
+    '    <button class="ctrl-mode-btn" id="btn-af-temp">From Temperature</button>' +
+    '  </div>' +
     '</div>' +
     '<div id="af-temp-panel" class="af-temp-panel" style="display:none">' +
     '  <div class="af-eq-box">' +
@@ -189,29 +213,42 @@ function buildAfWidget() {
     '    <span class="af-eq-cond">&nbsp; ; &nbsp; T &ge; T<sub>0</sub></span>' +
     '  </div>' +
     '  <div class="af-hint">' +
-    '    Eq.&nbsp;(7) &mdash; a, b: material constants &nbsp;&middot;&nbsp; T<sub>0</sub>: reference temperature (e.g.&nbsp;30&thinsp;&deg;C)<br>' +
+    '    Eq.&nbsp;(7) &mdash; a, b: material constants &nbsp;&middot;&nbsp; T<sub>0</sub>: reference temperature<br>' +
     '    a &gt; 0: A<sup>f</sup> decreases with T &nbsp;|&nbsp; a &lt; 0: A<sup>f</sup> increases with T' +
     '  </div>' +
-    '  <div class="param-grid" style="margin-top:6px">' +
+    '  <div class="param-grid" style="margin-top:8px">' +
     '    <div class="field"><label>T (&deg;C)</label><input type="text" id="af-T" value="30" autocomplete="off"></div>' +
     '    <div class="field"><label>T<sub>0</sub> (&deg;C)</label><input type="text" id="af-T0" value="30" autocomplete="off"></div>' +
     '    <div class="field"><label>a</label><input type="text" id="af-a" value="0" autocomplete="off"></div>' +
     '    <div class="field"><label>b</label><input type="text" id="af-b" value="1" autocomplete="off"></div>' +
     '  </div>' +
-    '  <div class="af-result-row">' +
-    '    &rarr; Computed A<sup>f</sup> = <span class="af-result-val" id="af-computed">1.0000</span>' +
-    '    <span class="af-result-note">(auto-fills the A_f field above)</span>' +
+    '</div>' +
+    '<div class="af-value-row">' +
+    '  <div class="field">' +
+    '    <label for="p-A_f">A<sup>f</sup><span id="af-value-hint" class="af-value-hint"></span></label>' +
+    '    <input type="text" id="p-A_f" value="0.957" class="af-value-input" autocomplete="off">' +
     '  </div>' +
     '</div>';
   body.appendChild(div);
 
-  div.querySelectorAll("input[name='af-mode']").forEach(r => {
-    r.addEventListener("change", e => {
-      const isTemp = e.target.value === "temp";
-      document.getElementById("af-temp-panel").style.display = isTemp ? "block" : "none";
-      if (isTemp) computeAf();
-    });
-  });
+  const btnDirect = document.getElementById("btn-af-direct");
+  const btnTemp   = document.getElementById("btn-af-temp");
+  const tempPanel = document.getElementById("af-temp-panel");
+  const afInput   = document.getElementById("p-A_f");
+  const afHint    = document.getElementById("af-value-hint");
+
+  function setAfMode(isTemp) {
+    btnDirect.classList.toggle("active", !isTemp);
+    btnTemp.classList.toggle("active", isTemp);
+    tempPanel.style.display = isTemp ? "block" : "none";
+    afInput.readOnly = isTemp;
+    afInput.classList.toggle("af-value-computed", isTemp);
+    afHint.textContent = isTemp ? " (auto-computed)" : "";
+    if (isTemp) computeAf();
+  }
+
+  btnDirect.addEventListener("click", () => setAfMode(false));
+  btnTemp.addEventListener("click",   () => setAfMode(true));
   ["af-T","af-T0","af-a","af-b"].forEach(id =>
     document.getElementById(id).addEventListener("input", computeAf));
 }
@@ -221,16 +258,14 @@ function computeAf() {
   const T0  = parseFloat(document.getElementById("af-T0")?.value);
   const a   = parseFloat(document.getElementById("af-a")?.value);
   const b   = parseFloat(document.getElementById("af-b")?.value);
-  const span  = document.getElementById("af-computed");
   const afInp = document.getElementById("p-A_f");
-  if (!span) return;
-  if ([T, T0, a, b].some(isNaN) || T0 === 0) { span.textContent = "—"; return; }
-  if (T < T0) { span.textContent = "T < T₀ (invalid)"; return; }
+  if (!afInp) return;
+  if ([T, T0, a, b].some(isNaN) || T0 === 0) { afInp.value = ""; return; }
+  if (T < T0) { afInp.value = "T < T₀"; return; }
   const ratio = (T - T0) / T0;
   const af = (ratio === 0) ? 1 : 1 - a * Math.pow(ratio, b);
-  if (!isFinite(af)) { span.textContent = "—"; return; }
-  span.textContent = af.toFixed(4);
-  if (afInp) afInp.value = af.toFixed(6);
+  if (!isFinite(af)) { afInp.value = ""; return; }
+  afInp.value = af.toFixed(6);
 }
 
 // ── Expand / Collapse all parameter sections ──────────────────────────────────

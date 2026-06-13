@@ -1,4 +1,4 @@
-/* NTC Creep Simulator v1.7 — CSS (dark default) */
+/* NTC Creep Simulator v1.7.2 — CSS (dark default) */
 
 :root {
   /* dark theme values are the default */
@@ -105,20 +105,21 @@ body {
 .field label { font-size:0.72rem; color:var(--text-muted); font-family:monospace; }
 .field input[type="text"] { padding:4px 7px; border:1px solid var(--border); border-radius:4px; background:var(--bg-secondary); color:var(--text); font-size:0.8rem; font-family:monospace; outline:none; }
 .field input:focus { border-color:var(--accent); }
+.field select { padding:4px 7px; border:1px solid var(--border); border-radius:4px; background:var(--bg-secondary); color:var(--text); font-size:0.8rem; font-family:monospace; outline:none; width:100%; cursor:pointer; }
+.field select:focus { border-color:var(--accent); }
 
 /* ── A_f temperature widget (Eq. 7) ───────────── */
 .af-widget { margin-top:12px; padding-top:10px; border-top:1px solid var(--border-light); }
-.af-mode-row { display:flex; align-items:center; gap:12px; margin-bottom:8px; flex-wrap:wrap; }
+.af-mode-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
 .af-mode-label { font-size:0.75rem; color:var(--text-muted); font-weight:500; white-space:nowrap; }
-.af-radio-opt { display:flex; align-items:center; gap:5px; font-size:0.8rem; color:var(--text); cursor:pointer; }
-.af-radio-opt input[type="radio"] { accent-color:var(--accent); cursor:pointer; }
-.af-temp-panel { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); padding:10px 12px; }
+.af-temp-panel { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); padding:10px 12px; margin-bottom:8px; }
 .af-eq-box { font-size:0.88rem; background:var(--bg-secondary); border:1px solid var(--border-light); border-left:3px solid var(--accent); border-radius:var(--radius); padding:10px 14px; margin-bottom:7px; color:var(--text); text-align:center; font-style:italic; line-height:2; letter-spacing:0.02em; }
 .af-eq-cond { font-style:normal; font-size:0.78rem; color:var(--text-muted); }
-.af-hint { font-size:0.72rem; color:var(--text-muted); margin-bottom:8px; line-height:1.6; }
-.af-result-row { margin-top:8px; font-size:0.82rem; color:var(--text); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-.af-result-val { font-weight:700; color:var(--accent); font-family:monospace; font-size:0.9rem; font-style:normal; }
-.af-result-note { font-size:0.72rem; color:var(--text-muted); }
+.af-hint { font-size:0.72rem; color:var(--text-muted); margin-bottom:4px; line-height:1.6; }
+.af-value-row { margin-top:6px; }
+.af-value-hint { font-style:italic; color:var(--accent); font-size:0.68rem; margin-left:4px; }
+.af-value-input { transition:border-color 0.15s, background 0.15s, color 0.15s; }
+.af-value-input.af-value-computed { border-color:var(--accent) !important; background:var(--accent-light) !important; color:var(--accent) !important; font-weight:700; cursor:not-allowed; }
 
 /* ── Control mode toggle ───────────────────────── */
 .ctrl-mode-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }

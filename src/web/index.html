@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NTC Creep Simulator v1.7</title>
+  <title>NTC Creep Simulator v1.7.2</title>
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
@@ -13,7 +13,7 @@
 <!-- ── Password Gate ─────────────────────────────────────────────────────── -->
 <div id="gate">
   <div class="gate-box">
-    <h2>NTC Creep Simulator v1.7</h2>
+    <h2>NTC Creep Simulator v1.7.2</h2>
     <p>Lab access only — enter the password to continue.</p>
     <input type="password" id="pw-input" placeholder="Password" autofocus>
     <button class="btn-primary" id="pw-btn" style="width:100%">Enter</button>
@@ -27,7 +27,7 @@
   <nav class="navbar">
     <div class="nav-brand">
       <img src="icon.svg" class="nav-icon" alt="">
-      NTC Creep Simulator <span class="nav-version">v1.7</span>
+      NTC Creep Simulator <span class="nav-version">v1.7.2</span>
     </div>
     <div class="nav-links">
       <button class="nav-btn" onclick="openModal('modal-howto')">How to Use</button>
@@ -143,8 +143,8 @@
         </div>
         <div class="ctrl-legend">
           <strong>Event types:</strong><br>
-          1 = Strain Rate &nbsp;|&nbsp; 2 = Relaxation &nbsp;|&nbsp; 3 = Strain Accel.<br>
-          4 = Stress Rate &nbsp;|&nbsp; 5 = Creep (const. stress) &nbsp;|&nbsp; 6 = StressStrain
+          1 = Strain rate control (%/s) &nbsp;|&nbsp; 2 = Stress relaxation (value = 0) &nbsp;|&nbsp; 3 = Strain acceleration control (%/s&sup2;)<br>
+          4 = Stress rate control (kPa/s) &nbsp;|&nbsp; 5 = Creep control (value = 0) &nbsp;|&nbsp; 6 = No control
         </div>
       </div>
     </div>
@@ -266,6 +266,12 @@
   <div class="modal-box">
     <div class="modal-header"><span>What's New</span><button onclick="closeModal('modal-changelog')">✕</button></div>
     <div class="modal-body">
+      <h3>v1.7.2 — 2026-06-13</h3>
+      <ul>
+        <li>Event type legend corrected to match desktop program labels (units: %/s, %/s², kPa/s)</li>
+        <li>Viscosity type (gv) and Reference curve type now rendered as labelled dropdowns; numeric value written to .prm on export</li>
+        <li>A<sup>f</sup> widget redesigned: segmented toggle replaces radio buttons; A<sup>f</sup> field moves into the widget and turns read-only (accent-highlighted) when computed from temperature</li>
+      </ul>
       <h3>v1.7 — 2026-06-13</h3>
       <ul>
         <li>Event type labels updated to match original desktop program (with units: %/s, kPa/s, etc.)</li>
@@ -336,7 +342,7 @@
   <div class="modal-box">
     <div class="modal-header"><span>About</span><button onclick="closeModal('modal-about')">✕</button></div>
     <div class="modal-body">
-      <h3>NTC Creep Simulator v1.7</h3>
+      <h3>NTC Creep Simulator v1.7.2</h3>
       <p>Developed by <strong>Kosit Jariyatatsakorn</strong></p>
       <p>A browser-based interface for the Nonlinear Three-Component (NTC) constitutive model for geomaterials. The C++ model is compiled to WebAssembly via Emscripten and runs entirely in the browser.</p>
       <h3>References</h3>
