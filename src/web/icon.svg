@@ -1,0 +1,23 @@
+<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="icon-clip">
+      <rect x="0" y="0" width="32" height="32" rx="7"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#icon-clip)">
+    <!-- Dark background -->
+    <rect width="32" height="32" fill="#0f1117"/>
+    <!-- Blue top band — confining pressure / loading -->
+    <rect y="0" width="32" height="11" fill="#3b82f6"/>
+    <!-- Thin accent line at band boundary -->
+    <rect y="10" width="32" height="1.5" fill="#60a5fa" opacity="0.6"/>
+    <!-- Light middle band — soil specimen -->
+    <rect y="11" width="32" height="10" fill="#dde6f5"/>
+    <!-- Thin accent line at band boundary -->
+    <rect y="20.5" width="32" height="1.5" fill="#374151" opacity="0.5"/>
+    <!-- Dark bottom band — base pedestal -->
+    <rect y="21" width="32" height="11" fill="#374151"/>
+  </g>
+  <!-- Outer border -->
+  <rect x="1.25" y="1.25" width="29.5" height="29.5" rx="5.75" stroke="#3b82f6" stroke-width="1.5" fill="none"/>
+</svg>

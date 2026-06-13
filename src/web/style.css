@@ -1,4 +1,4 @@
-/* NTC Creep Simulator v1.6 — CSS (dark default) */
+/* NTC Creep Simulator v1.7 — CSS (dark default) */
 
 :root {
   /* dark theme values are the default */
@@ -66,7 +66,8 @@ body {
 
 /* ── Navbar ────────────────────────────────────── */
 .navbar { display:flex; align-items:center; justify-content:space-between; padding:0 20px; height:46px; background:var(--nav-bg); border-bottom:1px solid rgba(255,255,255,0.08); position:sticky; top:0; z-index:100; }
-.nav-brand { font-weight:700; font-size:0.95rem; color:#e8eaf0; letter-spacing:-0.2px; }
+.nav-brand { font-weight:700; font-size:0.95rem; color:#e8eaf0; letter-spacing:-0.2px; display:flex; align-items:center; gap:8px; }
+.nav-icon { width:22px; height:22px; display:block; flex-shrink:0; }
 .nav-version { font-size:0.75rem; font-weight:400; color:#60a5fa; margin-left:4px; }
 .nav-links { display:flex; gap:4px; align-items:center; }
 .nav-btn { background:transparent; border:1px solid transparent; color:rgba(232,234,240,0.65); padding:5px 12px; border-radius:var(--radius); font-size:0.8rem; cursor:pointer; transition:all 0.15s; font-family:inherit; }
@@ -129,9 +130,9 @@ body {
 .ctrl-mode-btn:not(.active):hover { background:var(--accent-light); color:var(--accent); }
 
 /* ── Control table ─────────────────────────────── */
-.ctrl-table-wrap { overflow-x:auto; margin-bottom:8px; }
+.ctrl-table-wrap { overflow-x:auto; overflow-y:auto; max-height:340px; margin-bottom:8px; }
 table.ctrl-table { width:100%; border-collapse:collapse; font-size:0.8rem; }
-table.ctrl-table th { background:var(--bg-secondary); color:var(--text-muted); font-weight:600; padding:6px 7px; text-align:left; border-bottom:1px solid var(--border); font-size:0.73rem; white-space:nowrap; }
+table.ctrl-table th { background:var(--bg-secondary); color:var(--text-muted); font-weight:600; padding:6px 7px; text-align:left; border-bottom:1px solid var(--border); font-size:0.73rem; white-space:nowrap; position:sticky; top:0; z-index:1; }
 table.ctrl-table td { padding:3px 3px; border-bottom:1px solid var(--border-light); vertical-align:middle; }
 table.ctrl-table tr:last-child td { border-bottom:none; }
 table.ctrl-table input, table.ctrl-table select { padding:4px 5px; border:1px solid var(--border); border-radius:3px; background:var(--bg-secondary); color:var(--text); font-size:0.79rem; font-family:monospace; width:100%; outline:none; }
@@ -176,6 +177,23 @@ button:disabled { opacity:0.45; cursor:not-allowed; }
 .progress-bar.complete  { background:var(--success); }
 .progress-bar.error-bar { background:var(--error); }
 .progress-pct { font-size:0.75rem; color:var(--text-muted); min-width:34px; font-family:monospace; }
+
+/* ── Result tabs ───────────────────────────────── */
+.result-tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:12px; gap:0; }
+.result-tab { background:transparent; border:none; border-bottom:2px solid transparent; color:var(--text-muted); padding:8px 18px; font-size:0.82rem; cursor:pointer; transition:color 0.15s, border-color 0.15s; font-family:inherit; border-radius:0; margin-bottom:-1px; }
+.result-tab:hover { color:var(--text); }
+.result-tab.active { color:var(--accent); border-bottom-color:var(--accent); font-weight:600; }
+
+/* ── Data table ────────────────────────────────── */
+.data-table-wrap { overflow-x:auto; overflow-y:auto; max-height:420px; }
+.data-table-placeholder { height:120px; display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:0.88rem; }
+table.data-table { width:100%; border-collapse:collapse; font-size:0.75rem; font-family:monospace; }
+table.data-table th { background:var(--bg-secondary); color:var(--text-muted); font-weight:600; padding:6px 10px; text-align:right; border-bottom:2px solid var(--border); white-space:nowrap; position:sticky; top:0; z-index:1; }
+table.data-table th:first-child { text-align:left; }
+table.data-table td { padding:3px 10px; border-bottom:1px solid var(--border-light); text-align:right; color:var(--text); }
+table.data-table td:first-child { text-align:left; }
+table.data-table tr:hover td { background:var(--accent-light); }
+.data-table-note { font-size:0.72rem; color:var(--text-muted); padding:6px 10px; text-align:center; }
 
 /* ── Output panel ──────────────────────────────── */
 .output-controls { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }

@@ -1,4 +1,4 @@
-// app.js — NTC Creep Simulator v1.6
+// app.js — NTC Creep Simulator v1.7
 
 // ── Password gate ─────────────────────────────────────────────────────────────
 const PASSWORD_HASH = "061406b92feb02f5f0843b64f75e214a29e98341d8309718a7f7e68420e65ea1"; // geotech13
@@ -233,6 +233,31 @@ function computeAf() {
   if (afInp) afInp.value = af.toFixed(6);
 }
 
+// ── Expand / Collapse all parameter sections ──────────────────────────────────
+document.getElementById("btn-expand-all").addEventListener("click", () => {
+  document.querySelectorAll(".section-toggle").forEach(btn => {
+    btn.classList.add("open");
+    btn.nextElementSibling.classList.add("open");
+  });
+});
+document.getElementById("btn-collapse-all").addEventListener("click", () => {
+  document.querySelectorAll(".section-toggle").forEach(btn => {
+    btn.classList.remove("open");
+    btn.nextElementSibling.classList.remove("open");
+  });
+});
+
+// ── Result tabs (Chart / Data Table) ─────────────────────────────────────────
+document.querySelectorAll(".result-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".result-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    const isChart = tab.dataset.tab === "chart";
+    document.getElementById("result-pane-chart").style.display = isChart ? "" : "none";
+    document.getElementById("result-pane-table").style.display = isChart ? "none" : "";
+  });
+});
+
 // ── Assemble .prm text (serialization order = PARAMS array order) ─────────────
 function assemblePrm() {
   return PARAMS.map(p => {
@@ -252,12 +277,12 @@ function loadPrmText(text) {
 
 // ── Control sequence ──────────────────────────────────────────────────────────
 const EVENT_TYPES = [
-  { value:1, label:"1 – Strain Rate" },
-  { value:2, label:"2 – Relaxation" },
-  { value:3, label:"3 – Strain Accel." },
-  { value:4, label:"4 – Stress Rate" },
-  { value:5, label:"5 – Creep" },
-  { value:6, label:"6 – StressStrain" },
+  { value:1, label:"1 – Strain rate control (%/s)" },
+  { value:2, label:"2 – Stress relaxation (value = 0)" },
+  { value:3, label:"3 – Strain acceleration control (%/s²)" },
+  { value:4, label:"4 – Stress rate control (kPa/s)" },
+  { value:5, label:"5 – Creep control (value = 0)" },
+  { value:6, label:"6 – No control" },
 ];
 
 // ── Control table mode (.sctr = 4-col, .ctr = 5-col) ─────────────────────────
@@ -360,18 +385,25 @@ function loadCtrlText(text) {
   if (rows.length) initCtrlTable(rows);
 }
 
-// ── Example data (SL1T60) ─────────────────────────────────────────────────────
-const EXAMPLE_CTRL = [
-  [1,0,191,0.0008206],[5,191,11627,0],[1,11627,11765,0.000754],
-  [5,11765,23114,0],[1,23114,23255,0.00118],[5,23255,34588,0],[1,34588,46138,0.00125],
+// ── Example data (SC_T45 Hostun sand) ────────────────────────────────────────
+// Minimal fallback used only if the file fetch fails.
+const EXAMPLE_CTRL_FALLBACK = [
+  [1, 0, 1, 0.01, 0.00113],
+  [1, 1, 3, 0.02, 0.00113],
+  [1, 3, 8, 0.05, 0.00113],
 ];
 
 async function loadExample() {
   try {
-    const res = await fetch("example/SL1T60.prm");
-    if (res.ok) loadPrmText(await res.text());
+    const prmRes = await fetch("example/SC_T45.prm");
+    if (prmRes.ok) loadPrmText(await prmRes.text());
   } catch (_) {}
-  initCtrlTable(EXAMPLE_CTRL);
+  try {
+    const ctrRes = await fetch("example/SC_T45.ctr");
+    if (ctrRes.ok) { loadCtrlText(await ctrRes.text()); return; }
+  } catch (_) {}
+  setCtrlMode("ctr");
+  initCtrlTable(EXAMPLE_CTRL_FALLBACK);
 }
 loadExample();
 
@@ -536,7 +568,34 @@ function plotResult(text) {
   if (!parsedData.headers.length) return;
   populateAxisSelectors(parsedData.headers);
   renderChart();
+  renderDataTable(text);
   document.getElementById("output-controls").style.display = "flex";
+}
+
+function renderDataTable(text) {
+  const container   = document.getElementById("data-table-container");
+  const placeholder = document.getElementById("data-table-placeholder");
+  if (!container) return;
+  const lines = text.trim().split("\n");
+  if (lines.length < 2) return;
+  const headers   = lines[0].split("\t").map(h => h.trim());
+  const dataLines = lines.slice(1);
+  const MAX = 5000;
+  let html = '<table class="data-table"><thead><tr>';
+  headers.forEach(h => { html += `<th>${h}</th>`; });
+  html += '</tr></thead><tbody>';
+  dataLines.slice(0, MAX).forEach(line => {
+    const vals = line.split("\t");
+    html += '<tr>';
+    vals.forEach(v => { html += `<td>${v.trim()}</td>`; });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  if (dataLines.length > MAX)
+    html += `<div class="data-table-note">Showing first ${MAX} of ${dataLines.length} rows</div>`;
+  container.innerHTML = html;
+  container.style.display = "block";
+  if (placeholder) placeholder.style.display = "none";
 }
 
 function renderChart() {
@@ -569,7 +628,7 @@ function renderChart() {
       y: applyOffset("Sigma_f", parsedData.columns["Sigma_f"]),
       mode: "lines",
       line: { color:"#f97316", width:1.5, dash:"dash" },
-      name: "Sigma_f+1",
+      name: "Reference relation",
     });
   }
 
