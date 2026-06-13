@@ -1,4 +1,4 @@
-// app.js — NTC Creep Simulator v1.7.2
+// app.js — NTC Creep Simulator v1.7.3
 
 // ── Password gate ─────────────────────────────────────────────────────────────
 const PASSWORD_HASH = "061406b92feb02f5f0843b64f75e214a29e98341d8309718a7f7e68420e65ea1"; // geotech13
