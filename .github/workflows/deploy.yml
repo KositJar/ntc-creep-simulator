@@ -41,7 +41,8 @@ jobs:
           cp src/web/app.js     dist/
           cp src/web/style.css  dist/
           cp src/web/worker.js  dist/
-          cp src/web/icon.png   dist/
+          cp src/web/icon.png      dist/
+          cp src/web/icon-logo.png dist/
           cp -r src/web/example dist/example
 
       - name: Deploy to GitHub Pages

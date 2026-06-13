@@ -1,4 +1,4 @@
-/* NTC Creep Simulator v1.7.3 — CSS (dark default) */
+/* NTC Creep Simulator v1.7.4 — CSS (dark default) */
 
 :root {
   /* dark theme values are the default */
@@ -58,7 +58,9 @@ body {
 #gate { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:1000; }
 #gate.hidden { display:none; }
 .gate-box { background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius-lg); padding:40px 48px; text-align:center; box-shadow:var(--shadow-md); max-width:380px; width:90%; }
-.gate-box h2 { font-size:1.2rem; margin-bottom:6px; }
+.gate-logo { max-width:240px; width:90%; display:block; margin:0 auto 14px; }
+.gate-box h2 { font-size:1.1rem; margin-bottom:4px; }
+.gate-ver { font-size:0.78rem; font-weight:400; color:var(--accent); margin-left:4px; }
 .gate-box p  { color:var(--text-muted); font-size:0.85rem; margin-bottom:20px; }
 .gate-box input[type="password"] { width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-secondary); color:var(--text); font-size:1rem; margin-bottom:12px; outline:none; }
 .gate-box input[type="password"]:focus { border-color:var(--accent); }
@@ -67,7 +69,7 @@ body {
 /* ── Navbar ────────────────────────────────────── */
 .navbar { display:flex; align-items:center; justify-content:space-between; padding:0 20px; height:46px; background:var(--nav-bg); border-bottom:1px solid rgba(255,255,255,0.08); position:sticky; top:0; z-index:100; }
 .nav-brand { font-weight:700; font-size:0.95rem; color:#e8eaf0; letter-spacing:-0.2px; display:flex; align-items:center; gap:8px; }
-.nav-icon { width:22px; height:22px; display:block; flex-shrink:0; }
+.nav-icon { width:30px; height:30px; display:block; flex-shrink:0; }
 .nav-version { font-size:0.75rem; font-weight:400; color:#60a5fa; margin-left:4px; }
 .nav-links { display:flex; gap:4px; align-items:center; }
 .nav-btn { background:transparent; border:1px solid transparent; color:rgba(232,234,240,0.65); padding:5px 12px; border-radius:var(--radius); font-size:0.8rem; cursor:pointer; transition:all 0.15s; font-family:inherit; }
@@ -215,6 +217,7 @@ table.data-table tr:hover td { background:var(--accent-light); }
 .modal-body { padding:20px 18px; overflow-y:auto; line-height:1.7; }
 .modal-body h3 { font-size:0.9rem; font-weight:700; margin:18px 0 4px; color:var(--accent); }
 .modal-body h3:first-child { margin-top:0; }
+.about-logo { max-width:220px; width:80%; display:block; margin-bottom:14px; }
 .modal-body p  { font-size:0.84rem; color:var(--text-muted); margin-bottom:6px; }
 .modal-body ul { padding-left:18px; font-size:0.84rem; color:var(--text-muted); }
 .modal-body li { margin-bottom:4px; }
