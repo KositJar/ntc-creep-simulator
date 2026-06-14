@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NTC Creep Simulator v1.8.0</title>
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+</head>
+<body class="dark">
+
+<!-- ── Password Gate ─────────────────────────────────────────────────────── -->
+<div id="gate">
+  <div class="gate-box">
+    <img src="icon-logo.png" class="gate-logo" alt="3Comp NTC Simulator">
+    <h2>NTC Creep Simulator <span class="gate-ver">v1.8.0</span></h2>
+    <p>Lab access only — enter the password to continue.</p>
+    <input type="password" id="pw-input" placeholder="Password" autofocus>
+    <button class="btn-primary" id="pw-btn" style="width:100%">Enter</button>
+    <div class="gate-error" id="gate-error"></div>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- ── Navigation bar ──────────────────────────────────────────────────── -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <img src="icon.png" class="nav-icon" alt="">
+      NTC Creep Simulator <span class="nav-version">v1.8.0</span>
+    </div>
+    <div class="nav-links">
+      <button class="nav-btn" onclick="openModal('modal-howto')">How to Use</button>
+      <button class="nav-btn" onclick="openModal('modal-faq')">FAQ</button>
+      <button class="nav-btn" onclick="openModal('modal-changelog')">What's New</button>
+      <button class="nav-btn" onclick="openModal('modal-about')">About</button>
+      <div class="nav-dropdown" id="other-tools">
+        <button class="nav-btn" id="other-tools-btn" aria-haspopup="true" aria-expanded="false">🔗 Other Tools ▾</button>
+        <div class="nav-dropdown-panel" id="other-tools-panel">
+          <a class="tool-card" href="https://triaxial-corrected-area-kj.streamlit.app/" target="_blank" rel="noopener">
+            <img src="icon-triaxial.png" class="tool-card-icon" alt="">
+            <span class="tool-card-text">
+              <span class="tool-card-title">Corrected Area Calculator</span>
+              <span class="tool-card-sub">Triaxial Test Tool</span>
+            </span>
+          </a>
+        </div>
+      </div>
+      <button id="theme-toggle" class="nav-btn nav-btn-icon" title="Toggle theme">☀ Light</button>
+    </div>
+  </nav>
+
+  <!-- ── Input panels ─────────────────────────────────────────────────────── -->
+  <div class="two-col">
+
+    <!-- Left: Parameter editor -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>Parameter Editor</span>
+        <div class="upload-row">
+          <button class="btn-secondary btn-sm" id="btn-expand-all" title="Expand all sections">⊞ All</button>
+          <button class="btn-secondary btn-sm" id="btn-collapse-all" title="Collapse all sections">⊟ All</button>
+          <label class="btn-secondary btn-sm file-label">
+            Browse<input type="file" id="upload-prm" accept=".prm" style="display:none">
+          </label>
+          <div class="export-btn-wrap">
+            <button class="btn-secondary btn-sm" id="btn-export-prm">⬇ Export</button>
+            <span class="ext-label">.prm</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel-body">
+
+        <button class="section-toggle" type="button" style="--sec-color:#60a5fa">Initialization<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-init-body"></div>
+
+        <button class="section-toggle" type="button" style="--sec-color:#22d3ee">Hypo-Elastic<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-elastic-body"></div>
+
+        <button class="section-toggle" type="button" style="--sec-color:#a78bfa">Viscosity Function<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-viscous-body"></div>
+
+        <button class="section-toggle" type="button" style="--sec-color:#fbbf24">Decay Function<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-decay-body"></div>
+
+        <button class="section-toggle" type="button" style="--sec-color:#34d399">Reference Curve<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-ref-body"></div>
+
+        <button class="section-toggle" type="button" style="--sec-color:#f472b6">Theta<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-theta-body"></div>
+
+        <button class="section-toggle" type="button" style="--sec-color:#fb923c">Ageing<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-aging-body"></div>
+
+        <button class="section-toggle" type="button" style="--sec-color:#2dd4bf">Initial Viscous History<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-history-body"></div>
+
+        <button class="section-toggle" type="button" style="--sec-color:#818cf8">Direction<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-direction-body"></div>
+
+        <button class="section-toggle" type="button" style="--sec-color:#a3e635">Proportion<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-proportion-body"></div>
+
+        <button class="section-toggle" type="button" style="--sec-color:#38bdf8">Lambda_V<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-lambda-body"></div>
+
+        <button class="section-toggle" type="button" style="--sec-color:#fb7185">Iteration<span class="arrow">▶</span></button>
+        <div class="section-body" id="sec-solver-body"></div>
+
+      </div>
+    </div>
+
+    <!-- Right: Loading sequence -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>Loading Sequence (.sctr)</span>
+        <div class="upload-row">
+          <label class="btn-secondary btn-sm file-label">
+            Browse<input type="file" id="upload-sctr" accept=".sctr,.ctr" style="display:none">
+          </label>
+          <div class="export-btn-wrap">
+            <button class="btn-secondary btn-sm" id="btn-export-sctr">⬇ Export</button>
+            <span class="ext-label">.sctr</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <!-- Format toggle -->
+        <div class="ctrl-mode-row">
+          <span class="ctrl-mode-label">Format:</span>
+          <div class="ctrl-mode-toggle">
+            <button class="ctrl-mode-btn active" id="btn-mode-sctr">Simplified (.sctr) — 4 col</button>
+            <button class="ctrl-mode-btn" id="btn-mode-ctr">Classic (.ctr) — 5 col</button>
+          </div>
+        </div>
+
+        <div class="ctrl-table-wrap">
+          <table class="ctrl-table" id="ctrl-table">
+            <thead id="ctrl-thead">
+              <tr>
+                <th>Event Type</th>
+                <th>Start Time (s)</th>
+                <th>End Time (s)</th>
+                <th class="col-dt" style="display:none">dt (s)</th>
+                <th>Control Value</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="ctrl-tbody"></tbody>
+          </table>
+        </div>
+        <div class="ctrl-btn-row">
+          <button class="btn-secondary btn-sm" id="btn-add-row">+ Add Row</button>
+          <button class="btn-secondary btn-sm" id="btn-clear-ctrl" style="color:var(--error)">✕ Clear</button>
+        </div>
+        <div class="ctrl-legend">
+          <strong>Event types:</strong><br>
+          1 = Strain rate control (%/s) &nbsp;|&nbsp; 2 = Stress relaxation (value = 0) &nbsp;|&nbsp; 3 = Strain acceleration control (%/s&sup2;)<br>
+          4 = Stress rate control (kPa/s) &nbsp;|&nbsp; 5 = Creep control (value = 0) &nbsp;|&nbsp; 6 = No control
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.two-col -->
+
+  <!-- ── Run area ─────────────────────────────────────────────────────────── -->
+  <div class="run-area">
+    <button class="btn-primary" id="btn-run" disabled>Run Simulation</button>
+    <div class="project-name-wrap">
+      <label class="project-name-label" for="project-name">Project name</label>
+      <div class="project-name-row">
+        <input type="text" id="project-name" class="project-name-input" placeholder="ntc_YYYY-MM-DD_HHMMSS" autocomplete="off">
+        <button type="button" id="project-name-reset" class="project-name-reset" title="Reset to auto timestamp" aria-label="Reset to auto timestamp">↺</button>
+      </div>
+    </div>
+    <div class="run-right">
+      <span id="status-msg">Loading WASM module…</span>
+      <div id="progress-wrap" class="progress-wrap" style="display:none">
+        <div class="progress-track">
+          <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <span id="progress-pct" class="progress-pct">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Results ──────────────────────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-header">
+      <span>Results</span>
+      <div class="export-btn-wrap">
+        <button class="btn-secondary btn-sm" id="btn-download" disabled>⬇ Download</button>
+        <span class="ext-label">.dat</span>
+      </div>
+    </div>
+    <div class="panel-body">
+      <!-- Tab strip -->
+      <div class="result-tabs">
+        <button class="result-tab active" data-tab="chart">Chart</button>
+        <button class="result-tab" data-tab="table">Data Table</button>
+      </div>
+      <!-- Chart pane -->
+      <div id="result-pane-chart" class="result-pane">
+        <div class="output-controls" id="output-controls" style="display:none">
+          <div class="axis-select"><label>X axis:</label><select id="axis-x"></select></div>
+          <div class="axis-select"><label>Y axis:</label><select id="axis-y"></select></div>
+        </div>
+        <div id="chart-container">
+          <div id="chart-placeholder">Run a simulation to see the results here.</div>
+        </div>
+      </div>
+      <!-- Data Table pane -->
+      <div id="result-pane-table" class="result-pane" style="display:none">
+        <div class="data-table-wrap" id="data-table-wrap">
+          <div id="data-table-placeholder" class="data-table-placeholder">Run a simulation to see the data here.</div>
+          <div id="data-table-container"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Footer ───────────────────────────────────────────────────────────── -->
+  <footer>
+    <p>Developed by Kosit Jariyatatsakorn</p>
+    <p>Based on the Nonlinear Three-Component model:
+       Di Benedetto et al. (2002) and Tatsuoka et al. (2002)</p>
+  </footer>
+
+</div><!-- /#app -->
+
+<!-- ── Modals ──────────────────────────────────────────────────────────────── -->
+
+<!-- How to Use -->
+<div id="modal-howto" class="modal-overlay" onclick="closeModalOutside(event,this)">
+  <div class="modal-box">
+    <div class="modal-header"><span>How to Use</span><button onclick="closeModal('modal-howto')">✕</button></div>
+    <div class="modal-body">
+      <h3>1. Enter the password</h3>
+      <p>Use the lab password to access the simulator.</p>
+      <h3>2. Set parameters</h3>
+      <p>The <strong>Parameter Editor</strong> is pre-loaded with the SL1T60 example. Expand any section to edit values. Click <em>Browse</em> to upload a <code>.prm</code> file, or <em>Export .prm</em> to save your current values.</p>
+      <h3>3. Define the loading sequence</h3>
+      <p>The <strong>Loading Sequence</strong> table uses the simplified <code>.sctr</code> format (4 columns). Add/remove rows with the buttons. Upload an existing <code>.sctr</code> file or export to save your sequence.</p>
+      <h3>4. Run the simulation</h3>
+      <p>Click <strong>Run Simulation</strong>. The progress bar shows the percentage of total simulation time completed. When done, results appear as a chart.</p>
+      <h3>5. Interpret results</h3>
+      <p>Default chart: <strong>irreversible strain (ep_ir)</strong> on X-axis vs <strong>stress ratio R = Sigma</strong> (solid) and <strong>Sigma_f</strong> (dashed) on Y-axis. Both stress components are offset by +1 to reflect R = σ₁'/σ₃' starting from 1 at isotropic state. Use the axis selectors to switch to any other output column.</p>
+      <h3>6. Download</h3>
+      <p>Click <strong>⬇ Download .dat</strong> to save the raw tab-separated output for post-processing in MATLAB or Excel.</p>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div id="modal-faq" class="modal-overlay" onclick="closeModalOutside(event,this)">
+  <div class="modal-box">
+    <div class="modal-header"><span>FAQ</span><button onclick="closeModal('modal-faq')">✕</button></div>
+    <div class="modal-body">
+      <h3>What is the NTC model?</h3>
+      <p>The Nonlinear Three-Component (NTC) model decomposes soil deformation into elastic, inviscid (plastic), and viscous (creep) components. It was developed by Di Benedetto et al. and Tatsuoka et al. (2002) and is widely used for time-dependent behaviour of geomaterials.</p>
+      <h3>What does Sigma represent?</h3>
+      <p>Sigma is the stress ratio R = σ₁'/σ₃' (major to minor effective principal stress). In the output file it starts from 0 (= isotropic, R = 1), so +1 is added for display.</p>
+      <h3>What is ep_ir?</h3>
+      <p>ep_ir is the irreversible (plastic + creep) strain. Together with Sigma it forms the primary stress-strain curve.</p>
+      <h3>What is tau?</h3>
+      <p>τ is the creep damage variable. It tracks accumulated viscous deformation history.</p>
+      <h3>How do I run the original 3Comp desktop program?</h3>
+      <p>Download the 3Comp_modern_v2 repository from GitHub and build with Visual Studio 2022.</p>
+      <h3>Why does the progress bar show a percentage?</h3>
+      <p>Progress is calculated as currentTime / totalSimulationTime × 100. The simulation runs in a Web Worker so the browser stays responsive throughout.</p>
+      <h3>Can I change the password?</h3>
+      <p>Yes — see the <em>About</em> section for instructions.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Changelog -->
+<div id="modal-changelog" class="modal-overlay" onclick="closeModalOutside(event,this)">
+  <div class="modal-box">
+    <div class="modal-header"><span>What's New</span><button onclick="closeModal('modal-changelog')">✕</button></div>
+    <div class="modal-body">
+      <h3>v1.8.0 — 2026-06-15</h3>
+      <ul>
+        <li>New <strong>Other Tools</strong> menu in the navbar — quick link to the Corrected Area Calculator (Triaxial Test Tool)</li>
+        <li>Bug fix: a custom Project name typed before running is now kept after the run completes (no longer reset to a timestamp)</li>
+        <li>Added a ↺ reset button next to the Project name field to return to an auto timestamp</li>
+      </ul>
+      <h3>v1.7.6 — 2026-06-13</h3>
+      <ul>
+        <li>Login screen logo updated to tighter-cropped version (reduced whitespace)</li>
+      </ul>
+      <h3>v1.7.5 — 2026-06-13</h3>
+      <ul>
+        <li>Icon updated to cleaner v2 variant — larger, pre-rendered with transparent background</li>
+      </ul>
+      <h3>v1.7.4 — 2026-06-13</h3>
+      <ul>
+        <li>New geometric soil-layer icon with transparent background; horizontal 3Comp logo added to login screen and About modal</li>
+        <li>Navbar icon enlarged for better visibility</li>
+      </ul>
+      <h3>v1.7.3 — 2026-06-13</h3>
+      <ul>
+        <li>App icon updated to full 3Comp illustration (E/P/V component diagram with soil layers and creep curve)</li>
+      </ul>
+      <h3>v1.7.2 — 2026-06-13</h3>
+      <ul>
+        <li>Event type legend corrected to match desktop program labels (units: %/s, %/s², kPa/s)</li>
+        <li>Viscosity type (gv) and Reference curve type now rendered as labelled dropdowns; numeric value written to .prm on export</li>
+        <li>A<sup>f</sup> widget redesigned: segmented toggle replaces radio buttons; A<sup>f</sup> field moves into the widget and turns read-only (accent-highlighted) when computed from temperature</li>
+      </ul>
+      <h3>v1.7 — 2026-06-13</h3>
+      <ul>
+        <li>Event type labels updated to match original desktop program (with units: %/s, kPa/s, etc.)</li>
+        <li>Parameter editor: all sections collapsed by default; Expand All / Collapse All buttons added</li>
+        <li>New app icon (three-band SVG) shown in browser tab and navbar</li>
+        <li>Default example changed to SC_T45 Hostun sand (.ctr format, 158 events)</li>
+        <li>Results panel: Data Table tab added alongside Chart tab (all output columns, scrollable)</li>
+        <li>Chart legend: "Sigma_f+1" renamed to "Reference relation"</li>
+        <li>Ctrl table: sticky header and max-height scroll for long loading sequences</li>
+      </ul>
+      <h3>v1.6 — 2026-06-12</h3>
+      <ul>
+        <li>A_f (Ageing section): added checkbox to choose between direct input or computing from temperature using Eq.&nbsp;(7): A<sup>f</sup> = 1 &minus; a&middot;[(T &minus; T<sub>0</sub>)/T<sub>0</sub>]<sup>b</sup></li>
+        <li>When "Compute from Temperature" is selected, entering T, T₀, a, b auto-fills A_f in real time</li>
+      </ul>
+      <h3>v1.5 — 2026-06-12</h3>
+      <ul>
+        <li>Bug fix: navbar text invisible when switching to light theme</li>
+        <li>Renamed "Changelog" menu item to "What's New"</li>
+      </ul>
+      <h3>v1.4 — 2026-06-12</h3>
+      <ul>
+        <li>Bug fix: .sctr format was assembling control file with dt (hidden column) instead of control value — all .sctr simulations were running with wrong CTR values</li>
+        <li>Parameter section headings now have distinct colors for easy visual identification</li>
+      </ul>
+      <h3>v1.3 — 2026-06-12</h3>
+      <ul>
+        <li>Control file format toggle: Simplified (.sctr, 4-col) / Classic (.ctr, 5-col with dt)</li>
+        <li>Clear button for loading sequence table</li>
+        <li>Project Name field in run area — all exports (.dat/.prm/.sctr) share the same base name</li>
+        <li>Timestamp auto-filled as default project name; refreshes after each run</li>
+        <li>Worker fallback: gracefully handles old cached WASM (runSimulation)</li>
+        <li>Version number now updated with every release</li>
+      </ul>
+      <h3>v1.2 — 2026-06-12</h3>
+      <ul>
+        <li>Real percentage progress bar via Web Worker chunked execution</li>
+        <li>Dual-line chart: Sigma (solid) + Sigma_f (dashed), offset +1 for correct R display</li>
+        <li>Parameter sections reorganised to match desktop Parameter Editor</li>
+        <li>Export .prm and Export .sctr buttons added</li>
+        <li>Navigation menu bar (How to Use, FAQ, Changelog, About)</li>
+        <li>Dark mode set as default theme</li>
+        <li>Developer credit added</li>
+      </ul>
+      <h3>v1.1 — 2026</h3>
+      <ul>
+        <li>Password changed to lab password</li>
+        <li>Export .prm button added to parameter panel</li>
+        <li>Indeterminate progress bar during simulation</li>
+      </ul>
+      <h3>v1.0 — 2026</h3>
+      <ul>
+        <li>Initial release</li>
+        <li>C++ NTC model compiled to WebAssembly via Emscripten</li>
+        <li>GitHub Actions CI for automated build and deployment</li>
+        <li>Pre-loaded SL1T60 example</li>
+        <li>Interactive Plotly chart with selectable axes</li>
+        <li>Upload/download .prm, .sctr, .dat files</li>
+        <li>Light/dark theme toggle</li>
+        <li>Password-protected access</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- About -->
+<div id="modal-about" class="modal-overlay" onclick="closeModalOutside(event,this)">
+  <div class="modal-box">
+    <div class="modal-header"><span>About</span><button onclick="closeModal('modal-about')">✕</button></div>
+    <div class="modal-body">
+      <img src="icon-logo.png" class="about-logo" alt="3Comp NTC Simulator">
+      <h3>NTC Creep Simulator v1.8.0</h3>
+      <p>Developed by <strong>Kosit Jariyatatsakorn</strong></p>
+      <p>A browser-based interface for the Nonlinear Three-Component (NTC) constitutive model for geomaterials. The C++ model is compiled to WebAssembly via Emscripten and runs entirely in the browser.</p>
+      <h3>References</h3>
+      <ul>
+        <li>Di Benedetto, H., Tatsuoka, F., & Ishihara, M. (2002). Time-dependent shear deformation characteristics of sand and their constitutive modelling. <em>Soils and Foundations</em>, 42(2), 1–22.</li>
+        <li>Tatsuoka, F., Ishihara, M., Di Benedetto, H., & Kuwano, R. (2002). Time-dependent shear deformation characteristics of geomaterials and their simulation. <em>Soils and Foundations</em>, 42(2), 103–129.</li>
+      </ul>
+      <h3>Changing the password</h3>
+      <p>Open <code>src/web/app.js</code> and replace <code>PASSWORD_HASH</code> with the SHA-256 hash of your new password. To get the hash, run this in any browser console:</p>
+      <pre>crypto.subtle.digest("SHA-256", new TextEncoder().encode("yourpassword"))
+  .then(b => console.log(Array.from(new Uint8Array(b))
+    .map(x=>x.toString(16).padStart(2,"0")).join("")))</pre>
+      <p>Then push to <code>main</code> — GitHub Actions will rebuild and redeploy automatically.</p>
+      <h3>Source code</h3>
+      <p><a href="https://github.com/KositJar/ntc-creep-simulator" target="_blank">github.com/KositJar/ntc-creep-simulator</a></p>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
