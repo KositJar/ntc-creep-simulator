@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NTC Creep Simulator v1.7.4</title>
+  <title>NTC Creep Simulator v1.7.5</title>
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
@@ -14,7 +14,7 @@
 <div id="gate">
   <div class="gate-box">
     <img src="icon-logo.png" class="gate-logo" alt="3Comp NTC Simulator">
-    <h2>NTC Creep Simulator <span class="gate-ver">v1.7.4</span></h2>
+    <h2>NTC Creep Simulator <span class="gate-ver">v1.7.5</span></h2>
     <p>Lab access only — enter the password to continue.</p>
     <input type="password" id="pw-input" placeholder="Password" autofocus>
     <button class="btn-primary" id="pw-btn" style="width:100%">Enter</button>
@@ -28,7 +28,7 @@
   <nav class="navbar">
     <div class="nav-brand">
       <img src="icon.png" class="nav-icon" alt="">
-      NTC Creep Simulator <span class="nav-version">v1.7.4</span>
+      NTC Creep Simulator <span class="nav-version">v1.7.5</span>
     </div>
     <div class="nav-links">
       <button class="nav-btn" onclick="openModal('modal-howto')">How to Use</button>
@@ -267,6 +267,10 @@
   <div class="modal-box">
     <div class="modal-header"><span>What's New</span><button onclick="closeModal('modal-changelog')">✕</button></div>
     <div class="modal-body">
+      <h3>v1.7.5 — 2026-06-13</h3>
+      <ul>
+        <li>Icon updated to cleaner v2 variant — larger, pre-rendered with transparent background</li>
+      </ul>
       <h3>v1.7.4 — 2026-06-13</h3>
       <ul>
         <li>New geometric soil-layer icon with transparent background; horizontal 3Comp logo added to login screen and About modal</li>
@@ -353,7 +357,7 @@
     <div class="modal-header"><span>About</span><button onclick="closeModal('modal-about')">✕</button></div>
     <div class="modal-body">
       <img src="icon-logo.png" class="about-logo" alt="3Comp NTC Simulator">
-      <h3>NTC Creep Simulator v1.7.4</h3>
+      <h3>NTC Creep Simulator v1.7.5</h3>
       <p>Developed by <strong>Kosit Jariyatatsakorn</strong></p>
       <p>A browser-based interface for the Nonlinear Three-Component (NTC) constitutive model for geomaterials. The C++ model is compiled to WebAssembly via Emscripten and runs entirely in the browser.</p>
       <h3>References</h3>
