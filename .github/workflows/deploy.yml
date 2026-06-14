@@ -43,6 +43,7 @@ jobs:
           cp src/web/worker.js  dist/
           cp src/web/icon.png      dist/
           cp src/web/icon-logo.png dist/
+          cp src/web/icon-triaxial.png dist/
           cp -r src/web/example dist/example
 
       - name: Deploy to GitHub Pages

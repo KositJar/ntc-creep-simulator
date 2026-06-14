@@ -1,4 +1,4 @@
-// app.js — NTC Creep Simulator v1.7.6
+// app.js — NTC Creep Simulator v1.8.0
 
 // ── Password gate ─────────────────────────────────────────────────────────────
 const PASSWORD_HASH = "061406b92feb02f5f0843b64f75e214a29e98341d8309718a7f7e68420e65ea1"; // geotech13
@@ -48,6 +48,20 @@ function closeModalOutside(e, overlay) { if (e.target === overlay) overlay.class
 document.addEventListener("keydown", e => {
   if (e.key === "Escape") document.querySelectorAll(".modal-overlay.open").forEach(m => m.classList.remove("open"));
 });
+
+// ── Other Tools dropdown ────────────────────────────────────────────────────────
+(() => {
+  const dd  = document.getElementById("other-tools");
+  const btn = document.getElementById("other-tools-btn");
+  if (!dd || !btn) return;
+  const setOpen = open => {
+    dd.classList.toggle("open", open);
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  };
+  btn.addEventListener("click", e => { e.stopPropagation(); setOpen(!dd.classList.contains("open")); });
+  document.addEventListener("click", e => { if (!dd.contains(e.target)) setOpen(false); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") setOpen(false); });
+})();
 
 // ── Collapsible sections ──────────────────────────────────────────────────────
 document.querySelectorAll(".section-toggle").forEach(btn => {
@@ -466,10 +480,24 @@ function getProjectName() {
   return (el && el.value.trim()) ? el.value.trim() : makeTimestamp();
 }
 
+// Track whether the user has typed a custom name. When true we keep their
+// value across runs instead of overwriting it with a fresh timestamp.
+let userEditedName = false;
+
 function setProjectTimestamp() {
   const el = document.getElementById("project-name");
   if (el) el.value = makeTimestamp();
 }
+
+(() => {
+  const el = document.getElementById("project-name");
+  if (el) el.addEventListener("input", () => { userEditedName = true; });
+  const reset = document.getElementById("project-name-reset");
+  if (reset) reset.addEventListener("click", () => {
+    setProjectTimestamp();
+    userEditedName = false;
+  });
+})();
 
 // Set initial timestamp on load
 setProjectTimestamp();
@@ -530,7 +558,7 @@ function initWorker() {
       showProgress("done");
       setTimeout(() => showProgress("hidden"), 1800);
       document.getElementById("btn-download").disabled = false;
-      setProjectTimestamp();   // refresh timestamp for next download
+      if (!userEditedName) setProjectTimestamp();   // refresh only the auto timestamp; keep custom names
       plotResult(data);
     } else if (type === "error") {
       document.getElementById("btn-run").disabled = false;

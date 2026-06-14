@@ -1,4 +1,4 @@
-/* NTC Creep Simulator v1.7.6 — CSS (dark default) */
+/* NTC Creep Simulator v1.8.0 — CSS (dark default) */
 
 :root {
   /* dark theme values are the default */
@@ -75,6 +75,17 @@ body {
 .nav-btn { background:transparent; border:1px solid transparent; color:rgba(232,234,240,0.65); padding:5px 12px; border-radius:var(--radius); font-size:0.8rem; cursor:pointer; transition:all 0.15s; font-family:inherit; }
 .nav-btn:hover { color:#e8eaf0; background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.18); }
 .nav-btn-icon { font-size:0.78rem; }
+
+/* ── Other Tools dropdown ──────────────────────── */
+.nav-dropdown { position:relative; }
+.nav-dropdown-panel { display:none; position:absolute; right:0; top:calc(100% + 8px); min-width:260px; background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-md); padding:8px; z-index:200; }
+.nav-dropdown.open .nav-dropdown-panel { display:block; }
+.tool-card { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:var(--radius); text-decoration:none; transition:background 0.15s; }
+.tool-card:hover { background:var(--bg-secondary); }
+.tool-card-icon { width:40px; height:40px; flex-shrink:0; border-radius:8px; background:var(--bg-secondary); padding:2px; object-fit:contain; }
+.tool-card-text { display:flex; flex-direction:column; gap:2px; }
+.tool-card-title { font-size:0.9rem; font-weight:700; color:var(--text); }
+.tool-card-sub { font-size:0.76rem; color:var(--text-muted); }
 
 /* ── Layout ────────────────────────────────────── */
 #app { max-width:1280px; margin:0 auto; padding:16px 20px 60px; }
@@ -163,8 +174,11 @@ button:disabled { opacity:0.45; cursor:not-allowed; }
 /* ── Project name field ────────────────────────── */
 .project-name-wrap { display:flex; flex-direction:column; gap:2px; }
 .project-name-label { font-size:0.72rem; color:var(--text-muted); font-weight:500; }
+.project-name-row { display:flex; align-items:center; gap:6px; }
 .project-name-input { padding:6px 10px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-secondary); color:var(--text); font-size:0.82rem; font-family:monospace; outline:none; width:230px; }
 .project-name-input:focus { border-color:var(--accent); }
+.project-name-reset { flex-shrink:0; width:30px; height:30px; display:flex; align-items:center; justify-content:center; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-secondary); color:var(--text-muted); font-size:1rem; line-height:1; cursor:pointer; transition:all 0.15s; }
+.project-name-reset:hover { color:var(--accent); border-color:var(--accent); }
 
 /* ── Run area ──────────────────────────────────── */
 .run-area { display:flex; align-items:center; gap:16px; padding:14px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin-bottom:16px; flex-wrap:wrap; }
